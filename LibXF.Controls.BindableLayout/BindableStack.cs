@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Xamarin.Forms;
@@ -26,16 +27,24 @@ namespace LibXF.Controls
             if (propertyName == ItemsSourceProperty.PropertyName || propertyName == ItemTemplateProperty.PropertyName)
                 RecreateView();
         }
+        INotifyCollectionChanged last;
         void RecreateView()
         {
             Children.Clear();
+            if(last!=null) last.CollectionChanged -= Source_CollectionChanged;
             if (ItemsSource == null || ItemTemplate == null) return;
+            if (ItemsSource is INotifyCollectionChanged nc) nc.CollectionChanged += Source_CollectionChanged; 
             foreach(var c in ItemsSource)
             {
                 var v = (View)ItemTemplate.CreateContent();
                 v.BindingContext = c;
                 Children.Add(v);
             }
+        }
+
+        private void Source_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            RecreateView();
         }
     }
 }
