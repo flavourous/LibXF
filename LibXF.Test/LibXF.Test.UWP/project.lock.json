@@ -2361,7 +2361,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -2374,7 +2382,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -4795,7 +4804,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -4808,7 +4825,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -7265,7 +7283,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -7278,7 +7304,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -9708,7 +9735,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -9721,7 +9756,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -12187,7 +12223,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -12200,7 +12244,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -14630,7 +14675,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -14643,7 +14696,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -17109,7 +17163,15 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls.BindableLayout/1.0.1.10": {
+      "LibXF.Controls/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v1.4",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "Xamarin.Forms": "2.5.0.122203"
+        }
+      },
+      "LibXF.Controls.BindableLayout/1.0.1.11": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -17122,7 +17184,8 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls.BindableLayout": "1.0.1.10",
+          "LibXF.Controls": "1.0.0",
+          "LibXF.Controls.BindableLayout": "1.0.1.11",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -23813,7 +23876,12 @@
         "xamarin.forms.nuspec"
       ]
     },
-    "LibXF.Controls.BindableLayout/1.0.1.10": {
+    "LibXF.Controls/1.0.0": {
+      "type": "project",
+      "path": "../../LibXF.Controls/LibXF.Controls.csproj",
+      "msbuildProject": "../../LibXF.Controls/LibXF.Controls.csproj"
+    },
+    "LibXF.Controls.BindableLayout/1.0.1.11": {
       "type": "project",
       "path": "../../LibXF.Controls.BindableLayout/LibXF.Controls.BindableLayout.csproj",
       "msbuildProject": "../../LibXF.Controls.BindableLayout/LibXF.Controls.BindableLayout.csproj"

@@ -57,7 +57,34 @@ namespace LibXF.Test.Core
         Dictionary<String, Dictionary<String, Func<View>>> Cases = new Dictionary<string, Dictionary<string, Func<View>>>
         {
             { "BindableGrid", GridCases },
-            { "BindableStack", StackCases }
+            { "BindableStack", StackCases },
+            { "Text Stuff",TextStuff }
+        };
+
+        static Dictionary<String, Func<View>> TextStuff = new Dictionary<string, Func<View>>
+        {
+            {
+                "Label90",
+                () => {
+                    var g = new Grid();
+                    for(int i = 0; i<5; i++)
+                    {
+                        g.RowDefinitions.Add(new RowDefinition{Height = GridLength.Auto });
+                        for(int j=0;j<5;j++)
+                        {
+                            if(i==0) g.ColumnDefinitions.Add(new ColumnDefinition{Width= GridLength.Auto });
+                            var f9 = new Flip90 { FlippedContent = new Label{ BackgroundColor= Color.Red, Text = " flip " +j } };
+                            var nn = new Label { BackgroundColor= Color.Tomato,Text= j > 2 ? "more " + j : "." };
+                            View use = i == 0? f9:(View)nn;
+                            use.HorizontalOptions = LayoutOptions.Center;
+                            Grid.SetRow(use,i);
+                            Grid.SetColumn(use,j);
+                            g.Children.Add(use);
+                        }
+                    }
+                    return g;
+                }
+            }
         };
         static Dictionary<String, Func<View>> StackCases = new Dictionary<string, Func<View>>
         {
