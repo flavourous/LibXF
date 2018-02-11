@@ -185,7 +185,7 @@ namespace LibXF.Controls
             public async Task Dispatch(Action a)
             {
                 TaskCompletionSource<int> tea = new TaskCompletionSource<int>();
-                await Task.Delay(10);
+                await Task.Yield();
                 DispatchAsync(() =>
                 {
                     try
