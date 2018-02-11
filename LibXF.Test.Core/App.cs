@@ -56,7 +56,23 @@ namespace LibXF.Test.Core
         }
         Dictionary<String, Dictionary<String, Func<View>>> Cases = new Dictionary<string, Dictionary<string, Func<View>>>
         {
-            { "BindableGrid", GridCases }
+            { "BindableGrid", GridCases },
+            { "BindableStack", StackCases }
+        };
+        static Dictionary<String, Func<View>> StackCases = new Dictionary<string, Func<View>>
+        {
+            {
+                "Basic Stak",
+                () => new BindableStack
+                {
+                    Orientation = StackOrientation.Horizontal,
+                    ItemsSource = new[]{ "One","two","another one" },
+                    ItemTemplate = new DataTemplate(() => 
+                    {
+                        return new Label().Bind(Label.TextProperty, ".");
+                    })
+                }
+            }
         };
         static Dictionary<String, Func<View>> GridCases = new Dictionary<string, Func<View>>
         {
@@ -321,7 +337,7 @@ namespace LibXF.Test.Core
                 "Big MH Frozen Grid" ,
                 () =>
                 {
-                    var data = Generate(20,20,1,5);
+                    var data = Generate(25,23,1,1);
                     return new BindableGrid
                     {
                         FrozenHeaders=true,
@@ -347,6 +363,32 @@ namespace LibXF.Test.Core
                         CellInfo = new CellInfoBinder()
                                     .Bind(CellInfoBinder.RowSpanProperty, "r")
                                     .Bind(CellInfoBinder.ColumnSpanProperty, "c"),
+                        ItemsSource = data.items,
+                    };
+                }
+            },
+            {  "Frozen headless stack" ,
+                () =>
+                {
+                    var data = Generate(25,1,1,1);
+                    return new BindableGrid
+                    {
+                        FrozenHeaders=true,
+                        RowHeaders = data.rh,
+                        RowHeadersTemplate = new DataTemplate(() =>
+                            new Label{ VerticalTextAlignment= TextAlignment.Center, HorizontalTextAlignment = TextAlignment.End }.Bind(Label.TextProperty, "Data.val")
+                        ),
+                        ItemTemplate = new DataTemplate(() =>
+                            new Grid
+                            {
+                                WidthRequest = 50.0,
+                                HeightRequest = 50.0,
+                                Children=
+                                {
+                                    new Label{ VerticalTextAlignment = TextAlignment.Center, HorizontalTextAlignment = TextAlignment.Center, BackgroundColor = Color.White, Margin = new Thickness(1,1,0,0) }.Bind(Label.TextProperty, "Data.val")
+                                }
+                            }
+                        ),
                         ItemsSource = data.items,
                     };
                 }

@@ -157,7 +157,7 @@ namespace LibXF.Controls
                     }).Wait();
 
                     // grids
-                    int nch = mcol.Count(), nrh = mrow.Any() ? mrow.Max(x => x.Count()) : 0;
+                    int nch = mcol?.Count() ?? 0, nrh = (mrow?.Any() ?? false) ? mrow.Max(x => x?.Count() ?? 0) : 0;
                     var gapData = Enumerable.Range(0, nch).Select(x => Enumerable.Range(0, nrh).Select(y => new Gap()));
                     gb.Dispatch(() => ret.Children.Remove(ll)).Wait();
                     gb.Build(fakeGrid, gapData, (r, c) => itemTemplate, GridBoundary.Right | GridBoundary.Bottom);
@@ -336,6 +336,7 @@ namespace LibXF.Controls
 
             public Grid Build(Grid onto, IEnumerable items, Func<int,int,DataTemplate> tSelector, GridBoundary open, Action eq = null)
             {
+                if (items == null) return onto;
                 List<List<Object>> Contexts = new List<List<object>>();
                 int rows = 0, cols = 0;
                 foreach (var x in items)

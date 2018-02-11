@@ -9,10 +9,10 @@ namespace LibXF.Controls
 {
     public class BindableStack : StackLayout
     {
-        public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create("ItemsSource", typeof(BindableStack), typeof(IEnumerable));
+        public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create("ItemsSource", typeof(IEnumerable), typeof(BindableStack));
         public IEnumerable ItemsSource { get => GetValue(ItemsSourceProperty) as IEnumerable; set => SetValue(ItemsSourceProperty, value); }
 
-        public static readonly BindableProperty ItemTemplateProperty = BindableProperty.Create("ItemTemplate", typeof(BindableStack), typeof(DataTemplate));
+        public static readonly BindableProperty ItemTemplateProperty = BindableProperty.Create("ItemTemplate", typeof(DataTemplate), typeof(BindableStack));
         public DataTemplate ItemTemplate { get => (DataTemplate)GetValue(ItemTemplateProperty); set => SetValue(ItemTemplateProperty, value); }
 
         protected override void OnBindingContextChanged()
