@@ -40,7 +40,6 @@ namespace LibXF.Controls
         }
 
     }
-
     [Flags]
     public enum GridBoundary { None=0, Top=1, Bottom=2, Left=4, Right=8, }
     public class CellContext : BindableObject
@@ -48,7 +47,14 @@ namespace LibXF.Controls
         public GridBoundary Edge { get; set; }
         public Object Data { get; set; }
     }
-    public class Gap { }
+    public class Gap
+    {
+        // Not implimented everywhere
+        public Object Above { get; set; }
+        public Object Below { get; set; }
+        public Object Right { get; set; }
+        public Object Left { get; set; }
+    }
     internal class ContextGridBuilder
     {
         readonly Action<Action> DispatchAsync;
@@ -86,7 +92,7 @@ namespace LibXF.Controls
         }
 
         bool frozen = false;
-        public bool FreezeHeaders(bool f) => frozen = f;
+        public void FreezeHeaders(bool f) => frozen = f;
 
         public Grid Build()
         {
@@ -156,9 +162,10 @@ namespace LibXF.Controls
 
                     }).Wait();
 
+                    // get fake gap bit contexts
+                    var gapData = gb.BuildTopGap(mrow, mcol);
+
                     // grids
-                    int nch = mcol?.Count() ?? 0, nrh = (mrow?.Any() ?? false) ? mrow.Max(x => x?.Count() ?? 0) : 0;
-                    var gapData = Enumerable.Range(0, nch).Select(x => Enumerable.Range(0, nrh).Select(y => new Gap()));
                     gb.Dispatch(() => ret.Children.Remove(ll)).Wait();
                     gb.Build(fakeGrid, gapData, (r, c) => itemTemplate, GridBoundary.Right | GridBoundary.Bottom);
                     gb.Build(rhGrid, mrow, (r, c) => rTemplate ?? itemTemplate, GridBoundary.Right);
@@ -185,7 +192,7 @@ namespace LibXF.Controls
             public async Task Dispatch(Action a)
             {
                 TaskCompletionSource<int> tea = new TaskCompletionSource<int>();
-                await Task.Yield();
+                await Task.Delay(1);
                 DispatchAsync(() =>
                 {
                     try
@@ -313,6 +320,27 @@ namespace LibXF.Controls
                 return eitems;
             }
 
+            public IEnumerable<IEnumerable<Object>> BuildTopGap(IEnumerable<IEnumerable<object>> mrow, IEnumerable<IEnumerable<object>> mcol)
+            {
+                var gapData = new List<List<Gap>>();
+                int nch = mcol?.Count() ?? 0, nrh = (mrow?.Any() ?? false) ? mrow.Max(x => x?.Count() ?? 0) : 0;
+                for (int r = 0; r < nch; r++)
+                {
+                    var gr = new List<Gap>();
+                    for (int c = 0; c < nrh; c++)
+                    {
+                        var g = new Gap();
+                        var lrGap = r == nch - 1;
+                        var lcGap = c == nrh - 1;
+                        if (lrGap) g.Below = mrow.FirstOrDefault()?.ElementAtOrDefault(c);
+                        if (lcGap) g.Right = mcol.ElementAtOrDefault(r)?.FirstOrDefault();
+                        gr.Add(g);
+                    }
+                    gapData.Add(gr);
+                }
+                return gapData;
+            }
+
             public (IEnumerable combo, int rDepth, int cDepth) StickOnHeaders(IEnumerable items, IEnumerable row, IEnumerable column)
             {
                 var cHeaders = column.Expand();
@@ -323,7 +351,9 @@ namespace LibXF.Controls
                 var rHDepth = rHeaders.Count == 0 ? 0 : rHeaders.Max(x => x.Count);
                 var drDepth = data.Count == 0 ? 0 : data.Max(x => x.Count);
 
-                var topPart = cHeaders.Select(x => Enumerable.Repeat(new Gap(), rHDepth).Concat(x));
+                var tg = BuildTopGap(rHeaders, cHeaders);
+
+                var topPart = tg.Zip(cHeaders, (g, h) => g.Concat(h));
                 var mainpart = Enumerable.Range(0, Math.Max(data.Count, rHeaders.Count))
                                          .Select(x =>
                                          {

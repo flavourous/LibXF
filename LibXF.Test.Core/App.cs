@@ -2,7 +2,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Xamarin.Forms;
 
 namespace LibXF.Test.Core
@@ -73,10 +75,11 @@ namespace LibXF.Test.Core
                         for(int j=0;j<5;j++)
                         {
                             if(i==0) g.ColumnDefinitions.Add(new ColumnDefinition{Width= GridLength.Auto });
-                            var f9 = new Flip90 { FlippedContent = new Label{ BackgroundColor= Color.Red, Text = " flip " +j } };
-                            var nn = new Label { BackgroundColor= Color.Tomato,Text= j > 2 ? "more " + j : "." };
-                            View use = i == 0? f9:(View)nn;
-                            use.HorizontalOptions = LayoutOptions.Center;
+                            var f9 = new RLabel { Rotation=90, BackgroundColor= Color.Red, Text = "flip " +j };
+                            var nn = new Label { BackgroundColor= Color.Tomato,Text= j > 2 ? "more " + j : "."};
+                            var f9b= new RLabel{ BindingContext = "Binded looongy long ogjofd", Rotation = -90 };
+                            f9b.SetBinding(Label.TextProperty, ".");
+                            View use = i == 0? f9: i > 3 ? f9b :nn;
                             Grid.SetRow(use,i);
                             Grid.SetColumn(use,j);
                             g.Children.Add(use);
@@ -84,8 +87,105 @@ namespace LibXF.Test.Core
                     }
                     return g;
                 }
+            },
+            {
+                "Single Label90", () =>
+                {
+                    var lab = new RLabel{ BackgroundColor = Color.Coral, BindingContext = "Word Rotation\nMorrre of longggtown"};
+                    lab.SetBinding(Label.TextProperty, ".");
+
+                    var nl =new Label{Text="test" };
+                    nl.SetValue(Grid.RowProperty, 1 );
+
+                    return new Grid
+                    {
+                        RowDefinitions = { new RowDefinition{ Height = GridLength.Auto },new RowDefinition{ Height = GridLength.Auto } },
+                        Children = { lab,nl }
+                    };
+                }
+            },
+            {
+                "rortate platifgboin", () =>
+                {
+                    var vm = new np();
+                    Slider sX = new Slider(0,1.0,0.5);
+                    Slider sY = new Slider(0,1.0,0.5);
+                    Slider sR = new Slider(-180,180,0);
+                    Entry sE = new Entry();
+                    sX.SetBinding(Slider.ValueProperty, new Binding("AX"){Source= vm });
+                    sY.SetBinding(Slider.ValueProperty, new Binding("AY"){Source= vm });
+                    sR.SetBinding(Slider.ValueProperty, new Binding("R"){ Source=vm });
+                    sE.SetBinding(Entry.TextProperty, new Binding("T"){ Source=vm });
+
+                    
+                    Func<Label> xlab = ()=> new Label(){ Text = "X", HorizontalOptions = LayoutOptions.Center };
+
+                    var g = new Grid();
+                    for(int i=0;i<3; i++)
+                    {
+                        g.RowDefinitions.Add(new RowDefinition{ Height=GridLength.Auto});
+                        for(int j=0;j<3; j++)
+                        {
+                            g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto});
+                            var use =  xlab();
+                            if(i==0)
+                            {
+                                use.SetBinding(Label.AnchorXProperty, new Binding("AX"){Source=vm});
+                                use.SetBinding(Label.AnchorYProperty, new Binding("AY"){Source=vm});
+                                use.SetBinding(Label.RotationProperty, new Binding("R"){Source=vm});
+                                if(j==1)use.SetBinding(Label.TextProperty, new Binding("T"){Source=vm});
+                                use.WidthRequest = 120;
+                                use.HeightRequest = 120;
+                                use.Margin = new Thickness(-50,0,-50,0);
+                                use.VerticalTextAlignment = TextAlignment.Center;
+                                use.HorizontalTextAlignment = TextAlignment.Start;
+                            }
+                            Grid.SetRow(use,i);Grid.SetColumn(use,j);
+                            g.Children.Add(use);
+                        }
+                    }
+
+                    return new StackLayout
+                    {
+                        HorizontalOptions = LayoutOptions.Center,
+                        Children =
+                        {
+                            g,
+                            sX,
+                            sY,
+                            sR,
+                            sE
+                        }
+                    };
+                }
+
             }
         };
+        class np : INotifyPropertyChanged
+        {
+            public np()
+            {
+                T = "testing data";
+                AX = AY = 0.5;
+                R = -90;
+            }
+            public String T { get => GetProp<String>(); set => SetProp(value); }
+            public double R { get => GetProp<double>(); set => SetProp(value); }
+            public double AX { get => GetProp<double>(); set => SetProp(value); } 
+            public double AY { get => GetProp<double>(); set => SetProp(value); }
+            Dictionary<String, object> repo = new Dictionary<string, object>();
+            public event PropertyChangedEventHandler PropertyChanged = delegate { };
+            public T GetProp<T>([CallerMemberName]String prop=null)
+            {
+                return repo.ContainsKey(prop) ? (T)repo[prop] : default(T);
+            }
+            public void SetProp<T>(T val, [CallerMemberName]String prop = null)
+            {
+                repo[prop] = val;
+                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+            }
+        }
+
         static Dictionary<String, Func<View>> StackCases = new Dictionary<string, Func<View>>
         {
             {
@@ -165,36 +265,15 @@ namespace LibXF.Test.Core
                     },
                     ColumnHeaders = new[]{ new[] { "c1", "c2", "c3 mo mo mo" } },
                     RowHeaders = new[]{ new[] { "r1" }, new[] { "r2\n hai\n hao" }, new[]{ "r3" } },
-                    RowHeadersTemplate = new DataTemplate(() =>
-                    {
-                        return new Grid
-                        {
-                            Children =
-                            {
-                                new Label().Bind(Label.TextProperty, "Data")
-                            }
-                        };
-                    }),
-                    ColumnHeadersTemplate = new DataTemplate(() =>
-                    {
-                        return new Grid
-                        {
-                            Children =
-                            {
-                                new Label().Bind(Label.TextProperty, "Data")
-                            }
-                        };
-                    }),
-                    ItemTemplate = new DataTemplate(() =>
-                    {
-                        return new Grid
-                        {
-                            Children =
-                            {
-                                new Label().Bind(Label.TextProperty, "Data")
-                            }
-                        };
-                    })
+                    RowHeadersTemplate = new DataTemplate(() =>new Label().Bind(Label.TextProperty, "Data")),
+                    ColumnHeadersTemplate = new DataTemplate(() =>new Label().Bind(Label.TextProperty, "Data")),
+                    ItemTemplate = new DataTemplate(() =>{
+                            return new StackLayout {
+                               Children =   { new Label().Bind(Label.TextProperty, "Data") ,
+                                new Label{ BackgroundColor = Color.DarkCyan }.Bind(Label.TextProperty, "Data.Below")
+                                }
+                            };
+                        })
                 }
             },
             {
