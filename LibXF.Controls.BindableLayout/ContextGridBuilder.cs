@@ -97,14 +97,11 @@ namespace LibXF.Controls
         bool frozen = false;
         public void FreezeHeaders(bool f) => frozen = f;
 
-        public Grid Build()
+        public void Build(Grid ret)
         {
-            Grid ret = new Grid();
             if (items == null || itemTemplate == null)
-                return ret;
+                return;
 
-            Label ll = new Label { Text = "Loading..." };
-            ret.Children.Add(ll);
             GridBuilder gb = new GridBuilder(DispatchAsync);
 
             Task.Run(() =>
@@ -149,6 +146,7 @@ namespace LibXF.Controls
                         var ch = new ScrollView { Content = chGrid, Orientation = ScrollOrientation.Horizontal };
                         var main = new ScrollView { Content = mGrid, Orientation = ScrollOrientation.Both, HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill };
 
+                        ret.Children.Clear();
                         ret.Children.Add(fakeGrid);
                         ret.Children.Add(rh);
                         ret.Children.Add(ch);
@@ -169,7 +167,6 @@ namespace LibXF.Controls
                     var gapData = gb.BuildTopGap(mrow, mcol);
 
                     // grids
-                    gb.Dispatch(() => ret.Children.Remove(ll)).Wait();
                     gb.Build(fakeGrid, gapData, (r, c) => itemTemplate, GridBoundary.Right | GridBoundary.Bottom);
                     gb.Build(rhGrid, mrow, (r, c) => rTemplate ?? itemTemplate, GridBoundary.Right);
                     gb.Build(chGrid, mcol, (r, c) => cTemplate ?? itemTemplate, GridBoundary.Bottom);
@@ -183,7 +180,7 @@ namespace LibXF.Controls
                     });
                 }
             }).ContinueWith(x => DispatchAsync(()=> { if (x.IsFaulted) RenderFailure(x.Exception); }));
-            return ret;
+            return;
         }
 
         class GridBuilder
@@ -194,7 +191,7 @@ namespace LibXF.Controls
             public async Task Dispatch(Action a)
             {
                 TaskCompletionSource<int> tea = new TaskCompletionSource<int>();
-                await Task.Delay(1);
+                await Task.Delay(20); // Attempt to grant at least > 60 fps
                 DispatchAsync(() =>
                 {
                     try

@@ -38,6 +38,10 @@ namespace LibXF.Controls
         public static readonly BindableProperty FrozenHeadersProperty = BindableProperty.Create("FrozenHeaders", typeof(bool), typeof(BindableGrid), false);
         public bool FrozenHeaders { get => (bool)GetValue(FrozenHeadersProperty); set => SetValue(FrozenHeadersProperty, value); }
 
+        // Loading
+        public static readonly BindableProperty LoadingTemplateProperty = BindableProperty.Create("LoadingTemplate", typeof(DataTemplate), typeof(BindableGrid));
+        public DataTemplate LoadingTemplate { get => (DataTemplate)GetValue(LoadingTemplateProperty); set => SetValue(LoadingTemplateProperty, value); }
+
         protected override void OnBindingContextChanged()
         {
             base.OnBindingContextChanged();
@@ -67,7 +71,12 @@ namespace LibXF.Controls
             builder.AddHeaders(RowHeaders, ColumnHeaders);
             builder.UseCellInfoBinder(CellInfo);
             builder.FreezeHeaders(FrozenHeaders);
-            Content = builder.Build();
+            var g = new Grid() { };
+            if (LoadingTemplate != null)
+                g.Children.Add(LoadingTemplate.CreateContent() as View);
+            else g.Children.Add(new Label { Text = "Loading..." });
+            builder.Build(g);
+            Content = g;
         }
     }
     public class CellInfoBinder : BindableObject
