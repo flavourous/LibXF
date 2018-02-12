@@ -66,45 +66,6 @@ namespace LibXF.Test.Core
         static Dictionary<String, Func<View>> TextStuff = new Dictionary<string, Func<View>>
         {
             {
-                "Label90",
-                () => {
-                    var g = new Grid();
-                    for(int i = 0; i<5; i++)
-                    {
-                        g.RowDefinitions.Add(new RowDefinition{Height = GridLength.Auto });
-                        for(int j=0;j<5;j++)
-                        {
-                            if(i==0) g.ColumnDefinitions.Add(new ColumnDefinition{Width= GridLength.Auto });
-                            var f9 = new RLabel { Rotation=90, BackgroundColor= Color.Red, Text = "flip " +j };
-                            var nn = new Label { BackgroundColor= Color.Tomato,Text= j > 2 ? "more " + j : "."};
-                            var f9b= new RLabel{ BindingContext = "Binded looongy long ogjofd", Rotation = -90 };
-                            f9b.SetBinding(Label.TextProperty, ".");
-                            View use = i == 0? f9: i > 3 ? f9b :nn;
-                            Grid.SetRow(use,i);
-                            Grid.SetColumn(use,j);
-                            g.Children.Add(use);
-                        }
-                    }
-                    return g;
-                }
-            },
-            {
-                "Single Label90", () =>
-                {
-                    var lab = new RLabel{ BackgroundColor = Color.Coral, BindingContext = "Word Rotation\nMorrre of longggtown"};
-                    lab.SetBinding(Label.TextProperty, ".");
-
-                    var nl =new Label{Text="test" };
-                    nl.SetValue(Grid.RowProperty, 1 );
-
-                    return new Grid
-                    {
-                        RowDefinitions = { new RowDefinition{ Height = GridLength.Auto },new RowDefinition{ Height = GridLength.Auto } },
-                        Children = { lab,nl }
-                    };
-                }
-            },
-            {
                 "rortate platifgboin", () =>
                 {
                     var vm = new np();

@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LibXF.Controls.BindableLayout\LibXF.Controls.BindableLayout.csproj" />
-    <ProjectReference Include="..\LibXF.Controls\LibXF.Controls.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -58,9 +59,11 @@ namespace LibXF.Controls
     internal class ContextGridBuilder
     {
         readonly Action<Action> DispatchAsync;
-        public ContextGridBuilder(Action<Action> DispatchAsync)
+        readonly Action<Exception> RenderFailure;
+        public ContextGridBuilder(Action<Action> DispatchAsync, Action<Exception> RenderFailure)
         {
             this.DispatchAsync = DispatchAsync;
+            this.RenderFailure = RenderFailure;
         }
 
         IEnumerable items;
@@ -178,9 +181,8 @@ namespace LibXF.Controls
                         gb.EqualizeColumnWidths(fakeGrid, rhGrid);
                         gb.EqualizeRowHeights(fakeGrid, chGrid);
                     });
-
                 }
-            });
+            }).ContinueWith(x => DispatchAsync(()=> { if (x.IsFaulted) RenderFailure(x.Exception); }));
             return ret;
         }
 

@@ -56,10 +56,11 @@ namespace LibXF.Controls
             if(OurProps.Any(x=>x.PropertyName == propertyName))
                 RecreateView();
         }
+        public event Action<Exception> RenderTaskFailure = delegate { };
         void RecreateView()
         {
             Content = new ActivityIndicator { IsRunning = true };
-            var builder = new ContextGridBuilder(Device.BeginInvokeOnMainThread);
+            var builder = new ContextGridBuilder(Device.BeginInvokeOnMainThread, x => RenderTaskFailure(x));
             builder.SetItems(ItemsSource);
             builder.SetItemTemplate(ItemTemplate);
             builder.SetHeaderTemplates(RowHeadersTemplate, ColumnHeadersTemplate);
