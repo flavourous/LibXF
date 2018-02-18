@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.4</TargetFramework>
-    <Version>1.0.0.1</Version>
+    <Version>1.0.0.2</Version>
     <Company>Flavourware</Company>
     <Product>LibXF.Controls</Product>
     <AssemblyName>LibXF.Controls</AssemblyName>
