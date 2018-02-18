@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.4</TargetFramework>
-    <Version>1.0.1.15</Version>
+    <Version>1.0.0.1</Version>
     <Company>Flavourware</Company>
-    <Product>LibXF.Controls.BindableLayout</Product>
-    <AssemblyName>LibXF.Controls.BindableLayout</AssemblyName>
+    <Product>LibXF.Controls</Product>
+    <AssemblyName>LibXF.Controls</AssemblyName>
     <RootNamespace>LibXF.Controls</RootNamespace>
   </PropertyGroup>
 

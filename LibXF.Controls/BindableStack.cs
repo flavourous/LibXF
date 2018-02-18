@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Windows.Input;
 using Xamarin.Forms;
 
-namespace LibXF.Controls
+namespace LibXF.Controls.BindableLayout
 {
     public class BindableStack : StackLayout
     {
@@ -33,8 +34,9 @@ namespace LibXF.Controls
             Children.Clear();
             if(last!=null) last.CollectionChanged -= Source_CollectionChanged;
             if (ItemsSource == null || ItemTemplate == null) return;
-            if (ItemsSource is INotifyCollectionChanged nc) nc.CollectionChanged += Source_CollectionChanged; 
-            foreach(var c in ItemsSource)
+            if (ItemsSource is INotifyCollectionChanged nc) nc.CollectionChanged += Source_CollectionChanged;
+            last = ItemsSource as INotifyCollectionChanged;
+            foreach (var c in ItemsSource)
             {
                 var v = (View)ItemTemplate.CreateContent();
                 v.BindingContext = c;

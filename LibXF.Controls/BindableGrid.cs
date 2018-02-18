@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 
-namespace LibXF.Controls
+namespace LibXF.Controls.BindableLayout
 {
     public class BindableGrid : ContentView //  ItemsView<>?
     {
@@ -39,8 +39,13 @@ namespace LibXF.Controls
         public bool FrozenHeaders { get => (bool)GetValue(FrozenHeadersProperty); set => SetValue(FrozenHeadersProperty, value); }
 
         // Loading
-        public static readonly BindableProperty LoadingTemplateProperty = BindableProperty.Create("LoadingTemplate", typeof(DataTemplate), typeof(BindableGrid));
-        public DataTemplate LoadingTemplate { get => (DataTemplate)GetValue(LoadingTemplateProperty); set => SetValue(LoadingTemplateProperty, value); }
+        public static readonly BindableProperty LoadingTemplateProperty = BindableProperty.Create("LoadingTemplate", typeof(View), typeof(BindableGrid));
+        public View LoadingTemplate { get => (View)GetValue(LoadingTemplateProperty); set => SetValue(LoadingTemplateProperty, value); }
+
+        // Dispatcher!
+        public static readonly BindableProperty UIDispatcherProperty = BindableProperty.Create("UIDispatcher", typeof(ITimedDispatcher), typeof(BindableGrid), new TimedDispatcher(Device.BeginInvokeOnMainThread));
+        public ITimedDispatcher UIDispatcher { get => (ITimedDispatcher)GetValue(UIDispatcherProperty); set => SetValue(UIDispatcherProperty, value); }
+
 
         protected override void OnBindingContextChanged()
         {
@@ -64,19 +69,47 @@ namespace LibXF.Controls
         void RecreateView()
         {
             Content = new ActivityIndicator { IsRunning = true };
-            var builder = new ContextGridBuilder(Device.BeginInvokeOnMainThread, x => RenderTaskFailure(x));
+            var builder = new ContextGridBuilder(UIDispatcher, x => RenderTaskFailure(x));
             builder.SetItems(ItemsSource);
             builder.SetItemTemplate(ItemTemplate);
             builder.SetHeaderTemplates(RowHeadersTemplate, ColumnHeadersTemplate);
             builder.AddHeaders(RowHeaders, ColumnHeaders);
             builder.UseCellInfoBinder(CellInfo);
             builder.FreezeHeaders(FrozenHeaders);
-            var g = new Grid() { };
-            if (LoadingTemplate != null)
-                g.Children.Add(LoadingTemplate.CreateContent() as View);
-            else g.Children.Add(new Label { Text = "Loading..." });
-            builder.Build(g);
-            Content = g;
+            var g = new Grid();
+            var lt = LoadingTemplate ?? new Grid
+            {
+                Children =
+                {
+                    new Frame
+                    {
+                        VerticalOptions = LayoutOptions.Center,
+                        HorizontalOptions = LayoutOptions.Center,
+                        Content= new StackLayout
+                        {
+                            Margin = new Thickness(10,5),
+                            Spacing = 0,
+                            VerticalOptions = LayoutOptions.Center,
+                            HorizontalOptions = LayoutOptions.Center,
+                            Orientation = StackOrientation.Vertical,
+                            Children =
+                            {
+                                new Label
+                                {
+                                    HorizontalOptions =LayoutOptions.Center,
+                                    Text = "Loading",
+                                    TextColor = Color.White,
+                                }
+                            }
+                        },
+                        BackgroundColor = Color.FromHex("88000000")
+                    }
+                },
+                BackgroundColor = Color.FromHex("88FFFFFF")
+            };
+            var lg = new Grid { Children = { g, lt } };
+            Content = lg;
+            builder.Build(g).ContinueWith(t => Device.BeginInvokeOnMainThread(() => lg.Children.Remove(lt)));
         }
     }
     public class CellInfoBinder : BindableObject
@@ -86,5 +119,11 @@ namespace LibXF.Controls
 
         public static readonly BindableProperty ColumnSpanProperty = BindableProperty.Create("ColumnSpan", typeof(int), typeof(CellInfoBinder),1);
         public int ColumnSpan { get => (int)GetValue(ColumnSpanProperty); set => SetValue(ColumnSpanProperty, value); }
+
+        public static readonly BindableProperty WidthProperty = BindableProperty.Create("Width", typeof(double), typeof(CellInfoBinder), 50.0);
+        public double Width { get => (double)GetValue(WidthProperty); set => SetValue(WidthProperty, value); }
+
+        public static readonly BindableProperty HeightProperty = BindableProperty.Create("Height", typeof(double), typeof(CellInfoBinder), 50.0);
+        public double Height { get => (double)GetValue(HeightProperty); set => SetValue(HeightProperty, value); }
     }
 }

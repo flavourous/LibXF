@@ -1,10 +1,12 @@
 ﻿using LibXF.Controls;
+using LibXF.Controls.BindableLayout;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using Xamarin.Forms;
 
 namespace LibXF.Test.Core
@@ -21,35 +23,39 @@ namespace LibXF.Test.Core
             // col headres
             var ch = new[]
             {
-                Enumerable.Range(0,rcols).Select(c=> (c%cgrp==0)?new CC("Group " + c/cgrp,1,cgrp){ wgrp = c/cgrp }:null).ToArray(),
-                Enumerable.Range(0,rcols).Select(c=> new CC("Item " + c,1,1){ wgrp = c/cgrp }).ToArray(),
+                Enumerable.Range(0,rcols).Select(c=> (c%cgrp==0)?new CC("Group " + c/cgrp,1,cgrp,-1,-1){ wgrp = c/cgrp }:null).ToArray(),
+                Enumerable.Range(0,rcols).Select(c=> new CC("Item " + c,1,1,-1,-1){ wgrp = c/cgrp }).ToArray(),
             }.Skip(cgrp == 1 ? 1 : 0).ToArray();
             //row headers
             var rh = Enumerable.Range(0, rrows)
                       .Select(r => new[]
                         {
-                            (r%rgrp==0)?new CC("Group " + r/rgrp,rgrp,1){ wgrp = r/rgrp }:null,
-                            new CC("Item " + r,1,1){ wgrp = r/rgrp }
+                            (r%rgrp==0)?new CC("Group " + r/rgrp,rgrp,1,120,40){ wgrp = r/rgrp }:null,
+                            new CC("Item " + r,1,1,120,40){ wgrp = r/rgrp }
                         }.Skip(rgrp==1 ? 1 : 0))
                         .ToArray();
             // data!
-            var dat = Enumerable.Range(0, rrows).Select(r => Enumerable.Range(0, rcols).Select(c => new CC( c + "," + r, 1, 1)).ToArray()).ToArray();
+            var dat = Enumerable.Range(0, rrows).Select(r => Enumerable.Range(0, rcols).Select(c => new CC( c + "," + r, 1, 1, -1,30)).ToArray()).ToArray();
 
             return (dat, rh, ch);
         }
 
         class CC
         {
-            public CC(String val, int r, int c)
+            public CC(String val, int r, int c, double w, double h)
             {
                 this.val = val;
                 this.c = c;
                 this.r = r;
+                this.w = w;
+                this.h = h;
             }
             public static implicit operator CC (String s)
             {
-                return new CC(s, 1, 1);
+                return new CC(s, 1, 1, -1, -1);
             }
+            public double w { get; set; }
+            public double h { get; set; }
             public String val { get; set; }
             public int r { get; set; }
             public int c { get; set; }
@@ -66,6 +72,18 @@ namespace LibXF.Test.Core
         static Dictionary<String, Func<View>> TextStuff = new Dictionary<string, Func<View>>
         {
             {
+                "taplabel", ()=>
+                {
+                    var tl = new TapLabel
+                    {
+                        Text = "Jai2\nlabel size\n bigger",
+                    };
+
+                    tl.Command = new Command(()=>tl.BackgroundColor =tl.BackgroundColor == Color.DarkBlue ? Color.Crimson : Color.DarkBlue);
+                    return tl;
+                }
+            },
+            {
                 "rortate platifgboin", () =>
                 {
                     var vm = new np();
@@ -78,7 +96,7 @@ namespace LibXF.Test.Core
                     sR.SetBinding(Slider.ValueProperty, new Binding("R"){ Source=vm });
                     sE.SetBinding(Entry.TextProperty, new Binding("T"){ Source=vm });
 
-                    
+
                     Func<Label> xlab = ()=> new Label(){ Text = "X", HorizontalOptions = LayoutOptions.Center };
 
                     var g = new Grid();
@@ -188,13 +206,47 @@ namespace LibXF.Test.Core
                 }
             },
             {
+                "Basic Grid Rotated TExt" ,
+                () => new BindableGrid
+                {
+                    ItemsSource = new object[]
+                    {
+                        new object[] { "Row 1 Col 1: Data data", "Row 1 Col 3: Data dat asdasasda", "Row 1 Col 3: Daewfaefeata data" },
+                        new object[] { "Row 2 Col 1: Data ", "Row 2 Col 2: Data data", "Row 2 Col 3: Data data asdfadsfdasdsaf" },
+                        new object[] { "Row 3 Col 1: Datadd data", "Row 3 Col 2: Datasdfsfa data", "Row 3 Col 3: Daa" },
+                    },
+                    ItemTemplate = new DataTemplate(() =>
+                    {
+                         return new Label
+                            {
+                                Rotation = -90,
+                                HorizontalTextAlignment = TextAlignment.Start,
+                                VerticalTextAlignment = TextAlignment.Center,
+                                AnchorX=0.5,
+                                AnchorY=0.5,
+                                HeightRequest = 180,
+                                WidthRequest = 180,
+                                VerticalOptions = LayoutOptions.Fill,
+                                HorizontalOptions = LayoutOptions.Fill,
+                                TextColor = Color.Black,
+                                Margin = new Thickness(-80,0,-80,0),
+                            }.Bind(Label.TextProperty, "Data");
+                    }),
+                    CellInfo = new CellInfoBinder
+                    {
+                        Width = -1,
+                        Height = -1
+                    }
+                }
+            },
+            {
                 "MAshed Grid" ,
                 () => new BindableGrid
                 {
                     ItemsSource = new CC[][]
                     {
                         new CC[] { "This", "ia", "row" },
-                        new CC[] { new CC("MASHED",2,2), "LOLDONTCARE", "r567ow" },
+                        new CC[] { new CC("MASHED",2,2,-1,-1), "LOLDONTCARE", "r567ow" },
                         new CC[] { "LOLDONTCARE", "LOLDONTCARE", "ro??w" },
                     },
                     ItemTemplate = new DataTemplate(() =>
@@ -217,7 +269,7 @@ namespace LibXF.Test.Core
                 "Headered Grid" ,
                 () => new BindableGrid
                 {
-                    FrozenHeaders = true,
+                    FrozenHeaders = false,
                     ItemsSource = new []
                     {
                         new [] { "This\n is\n fat\n ok", "ia looooooooooooooooooooooooooong", "row" },
@@ -230,11 +282,15 @@ namespace LibXF.Test.Core
                     ColumnHeadersTemplate = new DataTemplate(() =>new Label().Bind(Label.TextProperty, "Data")),
                     ItemTemplate = new DataTemplate(() =>{
                             return new StackLayout {
-                               Children =   { new Label().Bind(Label.TextProperty, "Data") ,
-                                new Label{ BackgroundColor = Color.DarkCyan }.Bind(Label.TextProperty, "Data.Below")
+                               Children =
+                                {
+                                    new Label{  BackgroundColor=Color.WhiteSmoke, VerticalOptions=LayoutOptions.Fill, HorizontalOptions=LayoutOptions.Fill}.Bind(Label.TextProperty, "Data") ,
+                                  //  new Label{ BackgroundColor = Color.DarkCyan }.Bind(Label.TextProperty, "Data.Below")
                                 }
                             };
-                        })
+                        }
+                    ),
+                    CellInfo = new CellInfoBinder{ Height=-1, Width=-1, ColumnSpan=1, RowSpan=1 }
                 }
             },
             {
@@ -244,18 +300,18 @@ namespace LibXF.Test.Core
                     ItemsSource = new CC[][]
                     {
                         new CC[] { "This", "ia", "row" },
-                        new CC[] { "1This", new CC("mash",1,2), "no" },
+                        new CC[] { "1This", new CC("mash",1,2,-1,-1), "no" },
                         new CC[] { "32This", "55ia", "ro??w" },
                     },
                     ColumnHeaders = new CC[][]
                     {
-                        new CC[] { new CC("hmash",1,2), "nope", "hai" },
+                        new CC[] { new CC("hmash",1,2,-1,-1), "nope", "hai" },
                         new CC[] { "c1", "c2", "c3" }
                     },
                     RowHeaders = new CC[][]
                     {
                         new CC[] { "r1",">" },
-                        new CC[] { new CC("r23",2,1),">" },
+                        new CC[] { new CC("r23",2,1,-1,-1),">" },
                         new CC[] { "nope",">" } },
                     RowHeadersTemplate = new DataTemplate(() =>
                     {
@@ -404,7 +460,7 @@ namespace LibXF.Test.Core
                 "Big MH Frozen Grid" ,
                 () =>
                 {
-                    var data = Generate(25,23,1,1);
+                    var data = Generate(25,22,5,2);
                     return new BindableGrid
                     {
                         FrozenHeaders=true,
@@ -429,7 +485,9 @@ namespace LibXF.Test.Core
                         ),
                         CellInfo = new CellInfoBinder()
                                     .Bind(CellInfoBinder.RowSpanProperty, "r")
-                                    .Bind(CellInfoBinder.ColumnSpanProperty, "c"),
+                                    .Bind(CellInfoBinder.ColumnSpanProperty, "c")
+                                    .Bind(CellInfoBinder.WidthProperty, "w")
+                                    .Bind(CellInfoBinder.HeightProperty, "h"),
                         ItemsSource = data.items,
                     };
                 }
@@ -460,7 +518,64 @@ namespace LibXF.Test.Core
                     };
                 }
             },
-
+            {
+                "grids in row headers frozedn" ,
+                () =>
+                {
+                    var data = Generate(8,6,1,1);
+                    return new BindableGrid
+                    {
+                        FrozenHeaders=true,
+                        ColumnHeaders = data.ch,
+                        RowHeaders = data.rh,
+                        RowHeadersTemplate = new DataTemplate(() =>
+                            new Grid
+                            {
+                                Children =
+                                {
+                                    new Label{
+                                        VerticalTextAlignment = TextAlignment.Center,
+                                        HorizontalTextAlignment = TextAlignment.End,
+                                        BackgroundColor= Color.Tomato,
+                                        TextColor=Color.WhiteSmoke
+                                    }.Bind(Label.TextProperty, "Data.val")
+                                }
+                            }
+                        ),
+                        ColumnHeadersTemplate = new DataTemplate(() =>
+                            new Label{
+                                BackgroundColor =Color.DarkCyan,
+                                TextColor=Color.WhiteSmoke,
+                                VerticalTextAlignment = TextAlignment.End,
+                                HorizontalTextAlignment = TextAlignment.Center,
+                                VerticalOptions=LayoutOptions.Center,
+                                HorizontalOptions = LayoutOptions.Center
+                            }.Bind(Label.TextProperty, "Data.val")
+                        ),
+                        ItemTemplate = new DataTemplate(() =>
+                            new Grid
+                            {
+                                WidthRequest = 50.0,
+                                HeightRequest = 50.0,
+                                Children=
+                                {
+                                    new Label{
+                                        BackgroundColor=Color.Yellow,
+                                        VerticalTextAlignment = TextAlignment.Center,
+                                        HorizontalTextAlignment = TextAlignment.Center,
+                                        Margin = new Thickness(1,1,0,0) }.Bind(Label.TextProperty, "Data.val")
+                                }
+                            }
+                        ),
+                        CellInfo = new CellInfoBinder()
+                                    .Bind(CellInfoBinder.RowSpanProperty, "r")
+                                    .Bind(CellInfoBinder.ColumnSpanProperty, "c")
+                                    .Bind(CellInfoBinder.WidthProperty, "w")
+                                    .Bind(CellInfoBinder.HeightProperty, "h"),
+                        ItemsSource = data.items,
+                    };
+                }
+            },
 
         };
         public App()
