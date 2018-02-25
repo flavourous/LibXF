@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:lxf="clr-namespace:LibXF.Controls;assembly=LibXF.Controls"
+             xmlns:loc="clr-namespace:LibXF.Test.Core.Util"
+             x:Name="croot"
+             x:Class="LibXF.Test.Core.Util.TTSXaml">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            
+        <DataTemplate x:Key="TT2">
+            <ViewCell>
+                <ViewCell.View>
+                    <Label Text="I am a template fro 2"/>
+                </ViewCell.View>
+            </ViewCell>
+        </DataTemplate>
+        <DataTemplate x:Key="TDefault">
+            <ViewCell>
+                <ViewCell.View>
+                    <Label Text="I am a template fro 2"/>
+                </ViewCell.View>
+            </ViewCell>
+        </DataTemplate>
+        </ResourceDictionary>
+    </ContentView.Resources>
+    <ListView ItemsSource="{Binding Items, Source={Reference croot}}">
+        <ListView.ItemTemplate>
+            <lxf:TypeTemplateSelector Default="{StaticResource TDefault}">
+                <lxf:TypeTemplate DataType="{x:Type loc:T1}" ViewType="{x:Type loc:VC1}"/>
+                <lxf:TypeTemplate DataType="{x:Type loc:T2}" Template="{StaticResource TT2}"/>
+            </lxf:TypeTemplateSelector>
+        </ListView.ItemTemplate>
+    </ListView>
+</ContentView>

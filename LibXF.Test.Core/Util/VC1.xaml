@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ViewCell xmlns="http://xamarin.com/schemas/2014/forms" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LibXF.Test.Core.Util.VC1">
+  <ViewCell.View>
+      <StackLayout>
+          <Label Text="Hello Xamarin.Forms! I'm for T1." />
+            <Label Text="{Binding name}"/>
+        </StackLayout>
+  </ViewCell.View>
+</ViewCell>

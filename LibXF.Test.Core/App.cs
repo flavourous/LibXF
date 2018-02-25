@@ -1,4 +1,5 @@
 ﻿using LibXF.Controls;
+using LibXF.Test.Core.Util;
 using LibXF.Controls.BindableLayout;
 using System;
 using System.Collections;
@@ -10,8 +11,7 @@ using System.Windows.Input;
 using Xamarin.Forms;
 
 namespace LibXF.Test.Core
-{
-    
+{    
     public class App : Application
     {
         public static (IEnumerable items, IEnumerable rh, IEnumerable ch) Generate(int rows, int cols, int rgrp, int cgrp)
@@ -66,11 +66,40 @@ namespace LibXF.Test.Core
         {
             { "BindableGrid", GridCases },
             { "BindableStack", StackCases },
-            { "Text Stuff",TextStuff }
+            { "Text Stuff",TextStuff },
+            { "Utils",Utils }
+        };
+
+
+
+        static Dictionary<String, Func<View>> Utils = new Dictionary<string, Func<View>>
+        {
+            {
+                "TypeTemplateSelector", () =>
+                {
+                    return new ListView
+                    {
+                        ItemTemplate = new TypeTemplateSelector
+                        {
+                            Mappings =
+                            {
+                                new TypeTemplate{ DataType = typeof(T1), ViewType = typeof(V1) },
+                                new TypeTemplate{ DataType = typeof(T2), Template = new DataTemplate(() =>new ViewCell{ View= new Label{Text = "T2 templated" } }) }
+                            },
+                            Default = new DataTemplate(() => new ViewCell{View =  new Label{ Text="Default" } })
+                        },
+                        ItemsSource = new object[] {new T1(), new T2(), new object()}
+                    };
+                }
+            },
+            {
+                "TypeTemplateSelectorXaml", () => new Util.TTSXaml()
+            }
         };
 
         static Dictionary<String, Func<View>> TextStuff = new Dictionary<string, Func<View>>
         {
+            
             {
                 "taplabel", ()=>
                 {
