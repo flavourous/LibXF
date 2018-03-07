@@ -2361,7 +2361,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -2374,7 +2374,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -4795,7 +4795,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -4808,7 +4808,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -7265,7 +7265,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -7278,7 +7278,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -9708,7 +9708,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -9721,7 +9721,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -12187,7 +12187,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -12200,7 +12200,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -14630,7 +14630,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -14643,7 +14643,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -17109,7 +17109,7 @@
           "build/netstandard1.0/Xamarin.Forms.targets": {}
         }
       },
-      "LibXF.Controls/1.0.0.2": {
+      "LibXF.Controls/1.0.2": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
@@ -17122,7 +17122,7 @@
         "type": "project",
         "framework": ".NETStandard,Version=v1.4",
         "dependencies": {
-          "LibXF.Controls": "1.0.0.2",
+          "LibXF.Controls": "1.0.2",
           "NETStandard.Library": "1.6.1",
           "Xamarin.Forms": "2.5.0.122203"
         }
@@ -23808,7 +23808,7 @@
         "xamarin.forms.nuspec"
       ]
     },
-    "LibXF.Controls/1.0.0.2": {
+    "LibXF.Controls/1.0.2": {
       "type": "project",
       "path": "../../LibXF.Controls/LibXF.Controls.csproj",
       "msbuildProject": "../../LibXF.Controls/LibXF.Controls.csproj"
@@ -23827,7 +23827,8 @@
     "UAP,Version=v10.0.10586": []
   },
   "packageFolders": {
-    "C:\\Users\\d_hig\\.nuget\\packages\\": {}
+    "C:\\Users\\d_hig\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\": {}
   },
   "project": {
     "restore": {
@@ -23838,9 +23839,13 @@
       "packagesPath": "C:\\Users\\d_hig\\.nuget\\packages\\",
       "outputPath": "D:\\workspace\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\obj\\",
       "projectStyle": "ProjectJson",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\"
+      ],
       "configFilePaths": [
         "C:\\Users\\d_hig\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -23859,8 +23864,8 @@
       }
     },
     "dependencies": {
-      "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.2",
-      "Xamarin.Forms": "2.5.0.122203"
+      "Microsoft.NETCore.UniversalWindowsPlatform": "[5.2.2, )",
+      "Xamarin.Forms": "[2.5.0.122203, )"
     },
     "frameworks": {
       "uap10.0.10586": {}

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibXF.Test.Android", "LibXF.Test\LibXF.Test.Android\LibXF.Test.Android.csproj", "{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}"
 EndProject
@@ -78,8 +78,6 @@ Global
 		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.AppStore|x86.Build.0 = Release|Any CPU
 		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.AppStore|x86.Deploy.0 = Release|Any CPU
 		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.Debug|ARM.ActiveCfg = Debug|Any CPU
 		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.Debug|ARM.Build.0 = Debug|Any CPU
 		{CBA74AC0-AA5B-4556-A4D0-85CAB9749F69}.Debug|ARM.Deploy.0 = Debug|Any CPU
@@ -178,6 +176,8 @@ Global
 		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.AppStore|x86.Build.0 = Release|x86
 		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.AppStore|x86.Deploy.0 = Release|x86
 		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.Debug|Any CPU.Build.0 = Debug|x86
+		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.Debug|Any CPU.Deploy.0 = Debug|x86
 		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.Debug|ARM.ActiveCfg = Debug|ARM
 		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.Debug|ARM.Build.0 = Debug|ARM
 		{CF738B50-6C6D-4F4B-A6A0-E01F8B6AB348}.Debug|ARM.Deploy.0 = Debug|ARM
