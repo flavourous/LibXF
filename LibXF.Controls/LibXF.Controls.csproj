@@ -11,13 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
-    <PackageReference Include="VirtualizingUtils" Version="1.0.0" />
-    <PackageReference Include="Xamarin.Forms" Version="2.5.0.122203" />
+    <Compile Remove="%24Recycle.Bin\**" />
+    <EmbeddedResource Remove="%24Recycle.Bin\**" />
+    <None Remove="%24Recycle.Bin\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="%24Recycle.Bin\S-1-5-21-401515998-93381080-251107298-1001\" />
+    <PackageReference Include="System.Reactive" Version="3.1.1" />
+    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="VirtualizingUtils" Version="1.0.0" />
+    <PackageReference Include="Xamarin.Forms" Version="2.5.0.122203" />
   </ItemGroup>
 
 </Project>

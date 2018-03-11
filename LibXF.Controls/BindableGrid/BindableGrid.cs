@@ -54,8 +54,8 @@ namespace LibXF.Controls.BindableGrid
         }
         void RecreateView()
         {
-            Content = new VirtualizedGridLayout(CellsSource, CellTemplate, CellInfo);
-
+            if (new object[] { CellInfo, CellsSource, CellTemplate }.All(x => x != null))
+                Content = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, CellsSource, CellTemplate), Orientation = ScrollOrientation.Both };
         }
     }
     

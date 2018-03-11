@@ -10,9 +10,25 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Xamarin.Forms;
 using LibXF.Controls.BindableGrid;
+using System.Globalization;
 
 namespace LibXF.Test.Core
 {    
+    public static class AppExtensions
+    {
+        public static T Bind<T>(this T o, BindableProperty p, Binding b)
+            where T : BindableObject
+        {
+            o.SetBinding(p, b);
+            return o;
+        }
+        public static T Bind<T>(this T o, BindableProperty p, string prop)
+            where T : BindableObject
+        {
+            o.SetBinding(p, prop);
+            return o;
+        }
+    }
     public class App : Application
     {
         
@@ -23,7 +39,6 @@ namespace LibXF.Test.Core
             { "Text Stuff",TextStuff },
             { "Utils",Utils }
         };
-
 
 
         static Dictionary<String, Func<View>> Utils = new Dictionary<string, Func<View>>
@@ -83,29 +98,84 @@ namespace LibXF.Test.Core
                 }
             }
         };
+
+        class cci : ICellInfoManager
+        {
+            readonly double cs;
+            public cci(double cs) => this.cs = cs;
+            public double GetColumnmWidth(int col) => cs;
+            public double GetRowHeight(int row) => cs;
+            public int GetColumnSpan(object cellData) => 1;
+            public int GetRowSpan(object cellData) => 1;
+        }
+
+        class lgd
+        {
+            class lc : IValueConverter
+            {
+                public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+                {
+                    if (value is lgd lv)
+                        return targetType == typeof(Color) ? Color.FromRgb(lv.x, 0, lv.y) as object : lv.x + "," + lv.y;
+                    return targetType == typeof(Color) ? Color.Black as object : "";
+                }
+                public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+            }
+            public static IValueConverter converter = new lc();
+
+            public int x { get; set; }
+            public int y { get; set; }
+        }
+
         static Dictionary<String, Func<View>> GridCases = new Dictionary<string, Func<View>>
         {
             {
-                "Basic Grid" ,
-                () => new BindableGrid
+                "Basic Grid" , () =>
                 {
-                    CellsSource = new List<IList>
+                    var ci = new cci(30);
+                    return new BindableGrid
                     {
-                        new List<object> { "This", "ia", "row" },
-                        new List<object> { "1This", "4ia", "r567ow" },
-                        new List<object>{ "32This", "55ia", "ro??w" },
-                    },
-                    CellTemplate= new DataTemplate(() =>
-                    {
-                        return new Grid
+                        CellsSource = new List<IList>
                         {
-                            Children =
+                            new List<object> { "This", "ia", "row" },
+                            new List<object> { "1This", "4ia", "r567ow" },
+                            new List<object>{ "32This", "55ia", "ro??w" },
+                        },
+                        CellTemplate= new DataTemplate(() =>
+                        {
+                            return new Grid
                             {
-                                new BoxView() { BackgroundColor = Color.Aquamarine, Margin = new Thickness(-1) },
-                                new Label().Bind(Label.TextProperty, "Data")
+                                Margin = new Thickness(5),
+                                Children =
+                                {
+                                    new BoxView() { BackgroundColor = Color.Aquamarine, Margin = new Thickness(-1) },
+                                    new Label().Bind(Label.TextProperty, "Data")
+                                }
+                            };
+                        }),
+                        CellInfo = ci
+                    };
+                }
+            },
+            {
+                "Large Grid" , () =>
+                {
+                    var ci = new cci(30);
+                    return new BindableGrid
+                    {
+                        CellsSource = Enumerable.Range(0,255).Select(x=>Enumerable.Range(0,255).Select(y=> new lgd{ x=x,y=y } ).ToList() as IList).ToList(),
+                        CellTemplate= new DataTemplate(() =>
+                        {
+                            return new BoxView
+                            {
+                                Margin = new Thickness(-1),
+                                HorizontalOptions =LayoutOptions.FillAndExpand,
+                                VerticalOptions=LayoutOptions.FillAndExpand
                             }
-                        };
-                    })
+                            .Bind(BoxView.BackgroundColorProperty,new Binding(".", BindingMode.OneWay, lgd.converter));
+                        }),
+                        CellInfo = ci
+                    };
                 }
             }
         };

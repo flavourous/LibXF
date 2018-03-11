@@ -1,88 +1,26 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using VirtualizingUtils;
+using System.Reactive.Linq;
 using Xamarin.Forms;
+using System.Threading;
+using System.Reactive.Concurrency;
 
 namespace LibXF.Controls.BindableGrid
 {
-    static class ext
-    {
-        public static void Exhaust<T>(this Queue<T> q, Action<T> a)
-        {
-            while (q.Count > 0)
-                a(q.Dequeue());
-        }
-    }
+
     class VirtualizedGridLayout : Layout<View>
     {
-        class VTools: IntersectionFinder.FindIntersectionTools<int>
-        {
-            class dd : IDisposable { public void Dispose() => throw new NotImplementedException(); }
-            double extent;
-            public VTools(Func<int,double> Measure)
-            {
-                generate_next = Next;
-                reset_generator = Reset;
-                get_desired_height = Measure;
-                temporarily_realize_item = i => delegate { };
-            }
-
-            public void SetExtent(int total, double extent)
-            {
-                this.total_items = total;
-                this.extent = total;
-            }
-
-            int cfIndex;
-            double cfIntersection;
-            double cfScroll;
-            const double buffer = 300.0;
-            public int Update(double nScroll)
-            {
-                var offset = Math.Max(0, cfScroll - buffer);
-                var target = nScroll - buffer;
-                var intersection = cfIntersection;
-                var start = cfIndex;
-                var scanResult = Scan(cfIndex)
-            }
-
-            (int index, double offset, double intersection) Scan(int start, double intersection, double offset, double target)
-            {
-                bool forward = target >= offset; // intersection included within offset.
-
-                // Progressive scan not needed
-                if (target <= 0 && !forward) return (0, 0, 0);
-                if (target >= extent && forward) return (total_items - 1, extent, get_desired_height(total_items - 1));
-
-                // setup VVirtual
-                forwardDirection = forward;
-                this.start = start;
-                this.current = start - 1;
-                var reached = start;
-
-                // call VVirtual
-                var res = IntersectionFinder.FindIntersection<int>(new IntersectionFinder.FindIntersecionAndOffsetArgs
-                {
-                    initialIntersection = intersection,
-                    initialValue = offset,
-                    targetValue = target
-                }, this, ref reached);
-
-                return (reached, res.valueReached, res.intersection);
-            }
-
-            int current, start;
-            int Next() => ++current;
-            IDisposable Reset() { current = start -1; return new dd(); }
-        }
-
         readonly ICellInfoManager info;
         readonly IList<IList> cells;
         readonly DataTemplate template;
         readonly VTools rScanner, cScanner;
+
+        event EventHandler<EventArgs> DeferPartialLayout = delegate { };
+
         public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template)
         {
             this.info = info;
@@ -90,70 +28,187 @@ namespace LibXF.Controls.BindableGrid
             this.template = template;
             rScanner = new VTools(info.GetRowHeight);
             cScanner = new VTools(info.GetColumnmWidth);
+            Children.Add(new BoxView { WidthRequest = 0, HeightRequest = 0, BackgroundColor = Color.Transparent }); // forces onlayout to be called
+
+            Observable.FromEventPattern<EventArgs>(h => DeferPartialLayout += h, h => DeferPartialLayout -= h)
+                      .Buffer(TimeSpan.FromMilliseconds(50)) // lets treat it like a delay
+                      .Where(x => x.Count() > 0)
+                      .ObserveOn(SynchronizationContext.Current)
+                      .Subscribe(args => OurLayout());
         }
 
+        HashSet<String> ObservedProperties = new HashSet<string>
+        {
+            ScrollView.ScrollXProperty.PropertyName,
+            ScrollView.ScrollYProperty.PropertyName,
+            View.WidthProperty.PropertyName,
+            View.HeightProperty.PropertyName
+        };
+        IDisposable lastSubscriber;
         protected override void OnParentSet()
         {
-            base.OnParentSet();
-            if(Parent is ScrollView psv)
+            lock (mtl)
             {
-                if (lp != null) lp.PropertyChanged -= Psv_PropertyChanged;
-                psv.PropertyChanged += Psv_PropertyChanged;
-                lp = psv;
+                base.OnParentSet();
+                if (lastSubscriber != null)
+                    lastSubscriber.Dispose();
+                if (Parent != null)
+                {
+                    lastSubscriber = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(h => Parent.PropertyChanged += h, h => Parent.PropertyChanged -= h)
+                                               .Buffer(TimeSpan.FromMilliseconds(500))
+                                               .Select(x => x.Select(y => y.EventArgs.PropertyName).Where(ObservedProperties.Contains))
+                                               .Select(x => x.Distinct())
+                                               .Where(x => x.Count() > 0)
+                                               .ObserveOn(SynchronizationContext.Current)
+                                               .Subscribe(x => InvalidateViewportCells());
+                    InvalidateExtent();
+                    InvalidateViewportCells();
+                }
             }
         }
-
-        private ScrollView lp;
-        private void Psv_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if(e.PropertyName == ScrollView.ScrollXProperty.PropertyName 
-                || e.PropertyName == ScrollView.ScrollYProperty.PropertyName)
-                InvalidateViewportCells();
-            if (e.PropertyName == View.WidthProperty.PropertyName
-                 || e.PropertyName == View.HeightProperty.PropertyName)
-                InvalidateExtent();
-        }
-
         // recalculate them if required, intent to give LayoutChildren enough information to reogranize and recycle
-        double lSX, lSY;
+        object mtl = new object();
+        double lSX, lSY, lW, lH;
         private void InvalidateViewportCells()
         {
-            var sx = lp?.ScrollX ?? 0.0;
-            var sy = lp?.ScrollY ?? 0.0;
-            if (lSX != sx || lSY != sy)
+            lock (mtl)
             {
-                // cache buster
-                runLayout = true;
-                lSX = sx;
-                lSY = sy;
-                InvalidateLayout();
+                double sx = 0.0, sy = 0.0, w = 0.0, h = 0.0;
+                if (Parent is ScrollView lps)
+                {
+                    sx = lps.ScrollX;
+                    sy = lps.ScrollY;
+                }
+                if (Parent is View v)
+                {
+                    w = v.Width;
+                    h = v.Height;
+                }
+                if (lSX != sx || lSY != sy || lW != w || lH != h)
+                {
+                    // cache buster
+                    runLayout = true;
+                    runScan = true;
+                    lSX = sx;
+                    lSY = sy;
+                    lW = w;
+                    lH = h;
+                    OurLayout();
+                }
             }
         }
 
-        // buffer
-        const double buffer = 300.0; // constant buffer
+        protected override bool ShouldInvalidateOnChildRemoved(View child) => false;
+        protected override bool ShouldInvalidateOnChildAdded(View child) => false;
 
-        // first item layed out currently
-        int cfRow, cfCol; // the item idex
-        double cfIRow, cfICol; // last intersection
-        double cfSX, cfSY; // last used scroll value
+#warning not handling row/col span where the span into view from outside calculated buffer bounds
+#warning not caching GetRowHeight or GetColumnWidth calls appropriately
 
         readonly Dictionary<(int r, int c), View> CellViewIndex = new Dictionary<(int r, int c), View>();
-        
+
+        class DoScanResult
+        {
+            public ScanResult rowRange, colRange;
+            public Queue<KeyValuePair<(int r, int c), View>> recyclable;
+        }
+        DoScanResult DoScan()
+        {
+            // setup scanners
+            var nrows = cells.Count;
+            var ncols = cells.Count == 0 ? 0 : cells.Max(c => c.Count);
+
+            // Get bounds
+            CalculateExtent();
+            var rowRange = rScanner.Update(lSY, lH, eheight, nrows);
+            var colRange = cScanner.Update(lSX, lW, ewidth, ncols);
+
+            // Build a queue of recyclable cells
+            var recyclableQuery = CellViewIndex.Where(kv => kv.Key.c < colRange.first ||
+                                                            kv.Key.c > colRange.last ||
+                                                            kv.Key.r < rowRange.first ||
+                                                            kv.Key.r > rowRange.last);
+            var recyclable = new Queue<KeyValuePair<(int r, int c), View>>(recyclableQuery);
+
+            return new DoScanResult { rowRange = rowRange, colRange = colRange, recyclable = recyclable };
+        }
+
+        DoScanResult scan = null;
+        bool runScan = false;
         bool runLayout = false;
         protected override void LayoutChildren(double x, double y, double width, double height)
         {
-            // blocks recursion and layouts we may not need to perform
-            if (!runLayout) return;
-            runLayout = false;
+            // XF you suck.
+        }
+        void OurLayout()
+        { 
+            lock (mtl)
+            {
+                // incremental layout
+                var sw = Stopwatch.StartNew();
+                int maxMS = 50;
 
-            // setup scanners
-            rScanner.SetExtent(cells.Count, eheight);
-            cScanner.SetExtent(cells.Count == 0 ? 0 : cells.Max(c => c.Count), ewidth);
+                // blocks recursion and layouts we may not need to perform
+                if (!runLayout) return;
+                runLayout = false;
 
-            // For the rows - thinking through it
+                if (runScan || scan == null)
+                    scan = DoScan();
+                runScan = false;
 
-            var srow = rScanner.Scan(cfRow,, Math.Max(0, cfSY - buffer), lSY - buffer);
+                // Update index and layout views
+                double ly = scan.rowRange.placement;
+                for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r))
+                {
+                    double lx = scan.colRange.placement;
+                    for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c))
+                    {
+                        // Interleave progressively
+                        if (sw.ElapsedMilliseconds > maxMS)
+                        {
+                            runLayout = true;
+                            DeferPartialLayout(this, new EventArgs());
+                            return;
+                        }
+
+                        // Setup and check
+                        var rc = (r, c);
+                        var cc = cells[r][c];
+                        if (cc == null || CellViewIndex.ContainsKey(rc)) continue;
+
+                        // Generate container
+                        View container = null;
+                        if (scan.recyclable.Count > 0)
+                        {
+                            var dq = scan.recyclable.Dequeue();
+                            CellViewIndex.Remove(dq.Key);
+                            container = dq.Value;
+                        }
+                        else
+                        {
+                            container = template.CreateContent() as View;
+                            Children.Add(container);
+                        }
+                        container.BindingContext = cc;
+
+                        // Layout cell
+                        double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z));
+                        double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z));
+                        LayoutChildIntoBoundingRegion(container, new Rectangle(lx, ly, cwidth, cheight));
+
+                        // Update index
+                        CellViewIndex[rc] = container;
+                    }
+                }
+
+                // Delete any unrecycled
+                while (scan.recyclable.Count > 0)
+                {
+                    var rcy = scan.recyclable.Dequeue();
+                    Children.Remove(rcy.Value);
+                    CellViewIndex.Remove(rcy.Key);
+                }
+                scan = null; // Scan is completed
+            }
         }
 
         // Extent info
@@ -175,6 +230,7 @@ namespace LibXF.Controls.BindableGrid
                 eheight = Enumerable.Range(0, nrow).Sum(x => info.GetRowHeight(x));
                 ewidth = Enumerable.Range(0, ncol).Sum(x => info.GetColumnmWidth(x));
                 update = false;
+                InvalidateViewportCells();
             }
         }
 
