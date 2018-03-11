@@ -103,8 +103,8 @@ namespace LibXF.Test.Core
         {
             readonly double cs;
             public cci(double cs) => this.cs = cs;
-            public double GetColumnmWidth(int col) => cs;
-            public double GetRowHeight(int row) => cs;
+            public double GetColumnmWidth(int col, MeasureType mt) => cs;
+            public double GetRowHeight(int row, MeasureType mt) => cs;
             public int GetColumnSpan(object cellData) => 1;
             public int GetRowSpan(object cellData) => 1;
         }
@@ -121,7 +121,17 @@ namespace LibXF.Test.Core
                 }
                 public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
             }
+            class rlc : IValueConverter
+            {
+                Random r = new Random();
+                public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+                {
+                    return Color.FromRgb(r.Next(255), r.Next(255), r.Next(255));
+                }
+                public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+            }
             public static IValueConverter converter = new lc();
+            public static IValueConverter rconverter = new rlc();
 
             public int x { get; set; }
             public int y { get; set; }
@@ -173,6 +183,37 @@ namespace LibXF.Test.Core
                                 VerticalOptions=LayoutOptions.FillAndExpand
                             }
                             .Bind(BoxView.BackgroundColorProperty,new Binding(".", BindingMode.OneWay, lgd.converter));
+                        }),
+                        CellInfo = ci
+                    };
+                }
+            },
+            {
+                "Smalliosh With Headers" , () =>
+                {
+                    var ci = new cci(30);
+                    return new BindableGrid
+                    {
+                        CellsSource = Enumerable.Range(128,172).Select(x=>Enumerable.Range(128,172).Select(y=> new lgd{ x=x,y=y } ).ToList() as IList).ToList(),
+                        ColumnHeadersSource = Enumerable.Range(0,3).Select(x=>Enumerable.Range(128,172).Select(y=> new lgd{ x=255-x,y=y } ).ToList() as IList).ToList(),
+                        RowHeadersSource = Enumerable.Range(128,172).Select(x=>Enumerable.Range(0,2).Select(y=> new lgd{ x=x,y=255-y } ).ToList() as IList).ToList(),
+                        CellTemplate= new DataTemplate(() =>
+                        {
+                            return new Grid
+                            {
+                                WidthRequest = 30,
+                                HeightRequest = 30,
+                                Children =
+                                {
+                                    new BoxView
+                                    {
+                                        Margin = new Thickness(1),
+                                        HorizontalOptions =LayoutOptions.FillAndExpand,
+                                        VerticalOptions=LayoutOptions.FillAndExpand
+                                    }
+                                    .Bind(BoxView.BackgroundColorProperty,new Binding(".", BindingMode.OneWay, lgd.converter))
+                                }
+                            };
                         }),
                         CellInfo = ci
                     };

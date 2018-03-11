@@ -8,10 +8,11 @@ using System.Reactive.Linq;
 using Xamarin.Forms;
 using System.Threading;
 using System.Reactive.Concurrency;
+using System.Reactive.Subjects;
+using System.Reactive;
 
 namespace LibXF.Controls.BindableGrid
 {
-
     class VirtualizedGridLayout : Layout<View>
     {
         readonly ICellInfoManager info;
@@ -20,14 +21,16 @@ namespace LibXF.Controls.BindableGrid
         readonly VTools rScanner, cScanner;
 
         event EventHandler<EventArgs> DeferPartialLayout = delegate { };
-
-        public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template)
+        readonly Subject<EventPattern<PropertyChangedEventArgs>> FakeScroll = new Subject<EventPattern<PropertyChangedEventArgs>>();
+        readonly MeasureType mt;
+        public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template, MeasureType mt)
         {
+            this.mt = mt;
             this.info = info;
             this.cells = cells;
             this.template = template;
-            rScanner = new VTools(info.GetRowHeight);
-            cScanner = new VTools(info.GetColumnmWidth);
+            rScanner = new VTools(x=>info.GetRowHeight(x,mt));
+            cScanner = new VTools(x=>info.GetColumnmWidth(x,mt));
             Children.Add(new BoxView { WidthRequest = 0, HeightRequest = 0, BackgroundColor = Color.Transparent }); // forces onlayout to be called
 
             Observable.FromEventPattern<EventArgs>(h => DeferPartialLayout += h, h => DeferPartialLayout -= h)
@@ -35,6 +38,19 @@ namespace LibXF.Controls.BindableGrid
                       .Where(x => x.Count() > 0)
                       .ObserveOn(SynchronizationContext.Current)
                       .Subscribe(args => OurLayout());
+        }
+
+        // useful if you're not using a scrollviewer
+        public void FakeScrollTo(double x, double y)
+        {
+            // meh this will trigger everything
+            lock (mtl)
+            {
+                rScanner.SetOffset(y);
+                cScanner.SetOffset(x);
+                runLayout = true;
+            }
+            FakeScroll.OnNext(new EventPattern<PropertyChangedEventArgs>(this, new PropertyChangedEventArgs(ScrollView.ScrollXProperty.PropertyName)));
         }
 
         HashSet<String> ObservedProperties = new HashSet<string>
@@ -55,6 +71,7 @@ namespace LibXF.Controls.BindableGrid
                 if (Parent != null)
                 {
                     lastSubscriber = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(h => Parent.PropertyChanged += h, h => Parent.PropertyChanged -= h)
+                                               .Merge(FakeScroll)
                                                .Buffer(TimeSpan.FromMilliseconds(500))
                                                .Select(x => x.Select(y => y.EventArgs.PropertyName).Where(ObservedProperties.Contains))
                                                .Select(x => x.Distinct())
@@ -78,13 +95,15 @@ namespace LibXF.Controls.BindableGrid
                 {
                     sx = lps.ScrollX;
                     sy = lps.ScrollY;
+                    w = lps.Width;
+                    h = lps.Height;
                 }
-                if (Parent is View v)
+                else if (Parent is View v)
                 {
-                    w = v.Width;
-                    h = v.Height;
+                    w = Width;
+                    h = Height;
                 }
-                if (lSX != sx || lSY != sy || lW != w || lH != h)
+                if (lSX != sx || lSY != sy || lW != w || lH != h || runLayout)
                 {
                     // cache buster
                     runLayout = true;
@@ -122,6 +141,10 @@ namespace LibXF.Controls.BindableGrid
             var rowRange = rScanner.Update(lSY, lH, eheight, nrows);
             var colRange = cScanner.Update(lSX, lW, ewidth, ncols);
 
+            // log mad
+            if(mt== MeasureType.RowHeader)
+                Debug.WriteLine("Row Scan gave: {0}->{1} @ {2}", rowRange.first, rowRange.last, rowRange.placement);
+
             // Build a queue of recyclable cells
             var recyclableQuery = CellViewIndex.Where(kv => kv.Key.c < colRange.first ||
                                                             kv.Key.c > colRange.last ||
@@ -157,10 +180,10 @@ namespace LibXF.Controls.BindableGrid
 
                 // Update index and layout views
                 double ly = scan.rowRange.placement;
-                for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r))
+                for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r, mt))
                 {
                     double lx = scan.colRange.placement;
-                    for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c))
+                    for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c, mt))
                     {
                         // Interleave progressively
                         if (sw.ElapsedMilliseconds > maxMS)
@@ -173,7 +196,19 @@ namespace LibXF.Controls.BindableGrid
                         // Setup and check
                         var rc = (r, c);
                         var cc = cells[r][c];
-                        if (cc == null || CellViewIndex.ContainsKey(rc)) continue;
+                        if (cc == null) continue;
+
+                        // Size should be
+                        double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z, mt));
+                        double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z, mt));
+                        var lrect = new Rectangle(lx, ly, cwidth, cheight);
+
+                        // do we need to continue?
+                        if(CellViewIndex.ContainsKey(rc))
+                        {
+                            var ev = CellViewIndex[rc];
+                            if (ev.Bounds == lrect) continue;
+                        }
 
                         // Generate container
                         View container = null;
@@ -190,10 +225,8 @@ namespace LibXF.Controls.BindableGrid
                         }
                         container.BindingContext = cc;
 
-                        // Layout cell
-                        double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z));
-                        double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z));
-                        LayoutChildIntoBoundingRegion(container, new Rectangle(lx, ly, cwidth, cheight));
+                        // Layout cell - ignore layoutoptions
+                        container.Layout(lrect);
 
                         // Update index
                         CellViewIndex[rc] = container;
@@ -226,9 +259,9 @@ namespace LibXF.Controls.BindableGrid
             if(update)
             {
                 nrow = cells.Count;
-                ncol = cells.Max(x => x.Count);
-                eheight = Enumerable.Range(0, nrow).Sum(x => info.GetRowHeight(x));
-                ewidth = Enumerable.Range(0, ncol).Sum(x => info.GetColumnmWidth(x));
+                ncol = cells.Count == 0 ? 0 : cells.Max(x => x.Count);
+                eheight = Enumerable.Range(0, nrow).Sum(x => info.GetRowHeight(x, mt));
+                ewidth = Enumerable.Range(0, ncol).Sum(x => info.GetColumnmWidth(x, mt));
                 update = false;
                 InvalidateViewportCells();
             }
