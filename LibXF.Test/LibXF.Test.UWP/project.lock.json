@@ -24438,7 +24438,7 @@
       ]
     },
     "VirtualizingUtils/1.0.0": {
-      "sha512": "PiMvVhibC/rLfqAgeWMcH3uvwV59mzh1ssPViEy5UFMvbbuvHqgTpQTVthc/WPtFBRJy95Sl4/aJRqycvO+29w==",
+      "sha512": "tAFhYBm9OCwtj4o99H1o67l//yWBXsmHQgKzbn5aXqv8Plv3cS9x4T5S8jHR5OFYk1mYu2tzZkuKaf0OPFI5Ag==",
       "type": "package",
       "path": "virtualizingutils/1.0.0",
       "files": [
@@ -24648,37 +24648,37 @@
     "UAP,Version=v10.0.10586": []
   },
   "packageFolders": {
-    "C:\\Users\\Flavourous\\.nuget\\packages\\": {},
+    "C:\\Users\\d_hig\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\": {}
   },
   "project": {
     "restore": {
-      "projectUniqueName": "C:\\Users\\Flavourous\\source\\repos\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\LibXF.Test.UWP.csproj",
+      "projectUniqueName": "D:\\workspace\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\LibXF.Test.UWP.csproj",
       "projectName": "LibXF.Test.UWP",
-      "projectPath": "C:\\Users\\Flavourous\\source\\repos\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\LibXF.Test.UWP.csproj",
-      "projectJsonPath": "C:\\Users\\Flavourous\\source\\repos\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\project.json",
-      "packagesPath": "C:\\Users\\Flavourous\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Flavourous\\source\\repos\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\obj\\",
+      "projectPath": "D:\\workspace\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\LibXF.Test.UWP.csproj",
+      "projectJsonPath": "D:\\workspace\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\project.json",
+      "packagesPath": "C:\\Users\\d_hig\\.nuget\\packages\\",
+      "outputPath": "D:\\workspace\\LibXF\\LibXF.Test\\LibXF.Test.UWP\\obj\\",
       "projectStyle": "ProjectJson",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\"
       ],
       "configFilePaths": [
-        "C:\\Users\\Flavourous\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\d_hig\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Users\\Flavourous\\source\\nuget": {},
-        "https://flavourous.pkgs.visualstudio.com/_packaging/Dependencies/nuget/v3/index.json": {},
-        "https://www.nuget.org/api/v2/": {}
+        "D:\\NuGetLocal": {},
+        "https://api.nuget.org/v3/index.json": {},
+        "https://flavourous.pkgs.visualstudio.com/_packaging/Dependencies/nuget/v3/index.json": {}
       },
       "frameworks": {
         "uap10.0.10586": {
           "projectReferences": {
-            "C:\\Users\\Flavourous\\source\\repos\\LibXF\\LibXF.Test.Core\\LibXF.Test.Core.csproj": {
-              "projectPath": "C:\\Users\\Flavourous\\source\\repos\\LibXF\\LibXF.Test.Core\\LibXF.Test.Core.csproj"
+            "D:\\workspace\\LibXF\\LibXF.Test.Core\\LibXF.Test.Core.csproj": {
+              "projectPath": "D:\\workspace\\LibXF\\LibXF.Test.Core\\LibXF.Test.Core.csproj"
             }
           }
         }

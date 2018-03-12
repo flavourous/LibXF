@@ -218,7 +218,8 @@ namespace LibXF.Test.Core
                         CellInfo = ci
                     };
                 }
-            }
+            },
+            
         };
         public App()
         {

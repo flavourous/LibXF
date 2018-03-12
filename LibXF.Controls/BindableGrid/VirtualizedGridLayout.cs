@@ -13,7 +13,7 @@ using System.Reactive;
 
 namespace LibXF.Controls.BindableGrid
 {
-    class VirtualizedGridLayout : Layout<View>
+    public class VirtualizedGridLayout : Layout<View>
     {
         readonly ICellInfoManager info;
         readonly IList<IList> cells;
@@ -21,7 +21,6 @@ namespace LibXF.Controls.BindableGrid
         readonly VTools rScanner, cScanner;
 
         event EventHandler<EventArgs> DeferPartialLayout = delegate { };
-        readonly Subject<EventPattern<PropertyChangedEventArgs>> FakeScroll = new Subject<EventPattern<PropertyChangedEventArgs>>();
         readonly MeasureType mt;
         public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template, MeasureType mt)
         {
@@ -38,19 +37,6 @@ namespace LibXF.Controls.BindableGrid
                       .Where(x => x.Count() > 0)
                       .ObserveOn(SynchronizationContext.Current)
                       .Subscribe(args => OurLayout());
-        }
-
-        // useful if you're not using a scrollviewer
-        public void FakeScrollTo(double x, double y)
-        {
-            // meh this will trigger everything
-            lock (mtl)
-            {
-                rScanner.SetOffset(y);
-                cScanner.SetOffset(x);
-                runLayout = true;
-            }
-            FakeScroll.OnNext(new EventPattern<PropertyChangedEventArgs>(this, new PropertyChangedEventArgs(ScrollView.ScrollXProperty.PropertyName)));
         }
 
         HashSet<String> ObservedProperties = new HashSet<string>
@@ -71,8 +57,7 @@ namespace LibXF.Controls.BindableGrid
                 if (Parent != null)
                 {
                     lastSubscriber = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(h => Parent.PropertyChanged += h, h => Parent.PropertyChanged -= h)
-                                               .Merge(FakeScroll)
-                                               .Buffer(TimeSpan.FromMilliseconds(500))
+                                               .Buffer(TimeSpan.FromMilliseconds(20))
                                                .Select(x => x.Select(y => y.EventArgs.PropertyName).Where(ObservedProperties.Contains))
                                                .Select(x => x.Distinct())
                                                .Where(x => x.Count() > 0)
@@ -141,10 +126,6 @@ namespace LibXF.Controls.BindableGrid
             var rowRange = rScanner.Update(lSY, lH, eheight, nrows);
             var colRange = cScanner.Update(lSX, lW, ewidth, ncols);
 
-            // log mad
-            if(mt== MeasureType.RowHeader)
-                Debug.WriteLine("Row Scan gave: {0}->{1} @ {2}", rowRange.first, rowRange.last, rowRange.placement);
-
             // Build a queue of recyclable cells
             var recyclableQuery = CellViewIndex.Where(kv => kv.Key.c < colRange.first ||
                                                             kv.Key.c > colRange.last ||
@@ -203,33 +184,35 @@ namespace LibXF.Controls.BindableGrid
                         double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z, mt));
                         var lrect = new Rectangle(lx, ly, cwidth, cheight);
 
-                        // do we need to continue?
-                        if(CellViewIndex.ContainsKey(rc))
-                        {
-                            var ev = CellViewIndex[rc];
-                            if (ev.Bounds == lrect) continue;
-                        }
-
-                        // Generate container
+                        // get child to layout
                         View container = null;
-                        if (scan.recyclable.Count > 0)
+                        if (CellViewIndex.ContainsKey(rc))
                         {
-                            var dq = scan.recyclable.Dequeue();
-                            CellViewIndex.Remove(dq.Key);
-                            container = dq.Value;
+                            container = CellViewIndex[rc];
+                            if (container.Bounds == lrect) continue;
                         }
                         else
                         {
-                            container = template.CreateContent() as View;
-                            Children.Add(container);
+                            // Generate container
+                            if (scan.recyclable.Count > 0)
+                            {
+                                var dq = scan.recyclable.Dequeue();
+                                CellViewIndex.Remove(dq.Key);
+                                container = dq.Value;
+                            }
+                            else
+                            {
+                                container = template.CreateContent() as View;
+                                Children.Add(container);
+                            }
+                            container.BindingContext = cc;
+
+                            // Update index
+                            CellViewIndex[rc] = container;
                         }
-                        container.BindingContext = cc;
 
                         // Layout cell - ignore layoutoptions
                         container.Layout(lrect);
-
-                        // Update index
-                        CellViewIndex[rc] = container;
                     }
                 }
 

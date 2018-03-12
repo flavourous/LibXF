@@ -61,8 +61,8 @@ namespace LibXF.Controls.BindableGrid
                 var mainCells = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, CellsSource, CellTemplate, MeasureType.Cell), Orientation = ScrollOrientation.Both };
                 var urh = RowHeadersSource ?? Enumerable.Empty<object>().Select(x => Enumerable.Empty<object>().ToList() as IList).ToList();
                 var uch = ColumnHeadersSource ?? Enumerable.Empty<object>().Select(x => Enumerable.Empty<object>().ToList() as IList).ToList();
-                var rHead = new VirtualizedGridLayout(CellInfo, urh, CellTemplate, MeasureType.RowHeader) { IsClippedToBounds = true };
-                var cHead = new VirtualizedGridLayout(CellInfo, uch, CellTemplate, MeasureType.ColumnHeader) { IsClippedToBounds = true };
+                var rHead = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, urh, CellTemplate, MeasureType.RowHeader), Orientation= ScrollOrientation.Vertical };
+                var cHead = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, uch, CellTemplate, MeasureType.ColumnHeader), Orientation = ScrollOrientation.Horizontal };
                 var cHeadHeight = uch.Count == 0 ? 0.0 : Enumerable.Range(0, uch.Count).Sum(x => CellInfo.GetRowHeight(x, MeasureType.ColumnHeader));
                 var maxcols = urh.Count == 0 ? 0 : urh.Max(x => x.Count);
                 var rHeadWidth = maxcols == 0 ? 0.0 : Enumerable.Range(0, maxcols).Sum(x => CellInfo.GetColumnmWidth(x, MeasureType.RowHeader));
@@ -74,8 +74,18 @@ namespace LibXF.Controls.BindableGrid
                 // Link the headers to the main
                 mainCells.Scrolled += (o, e) =>
                 {
-                    cHead.FakeScrollTo(mainCells.ScrollX, 0);
-                    rHead.FakeScrollTo(0, mainCells.ScrollY);
+                    rHead.ScrollToAsync(0, mainCells.ScrollY, false);
+                }; mainCells.Scrolled += (o, e) =>
+                {
+                    cHead.ScrollToAsync(mainCells.ScrollX, 0, false);
+                };
+                cHead.Scrolled += (o, e) =>
+                {
+                    mainCells.ScrollToAsync(cHead.ScrollX, mainCells.ScrollY, false);
+                };
+                rHead.Scrolled += (o, e) =>
+                {
+                    mainCells.ScrollToAsync(mainCells.ScrollX, rHead.ScrollY, false);
                 };
 
                 Content = new Grid

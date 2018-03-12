@@ -34,11 +34,11 @@ namespace LibXF.Controls.BindableGrid
             var start = cfIndex;
 
             // scan for first item
-            var startTarget = scroll + fakeOffset - buffer;
+            var startTarget = scroll - buffer;
             var startResult = Scan(start, intersection, offset, startTarget, extent);
 
             // scan for last item
-            var endTarget = scroll + viewport + fakeOffset + buffer;
+            var endTarget = scroll + viewport + buffer;
             var endResult = Scan(start, intersection, offset, endTarget, extent);
 
             // store intermediates
@@ -47,11 +47,8 @@ namespace LibXF.Controls.BindableGrid
             cfScroll = scroll;
 
             // return range
-            return new ScanResult { placement = startResult.offset - startResult.intersection - fakeOffset, first = startResult.index, last = endResult.index };
+            return new ScanResult { placement = startResult.offset - startResult.intersection, first = startResult.index, last = endResult.index };
         }
-
-        double fakeOffset = 0.0;
-        public void SetOffset(double o) => fakeOffset = o;
 
         (int index, double offset, double intersection) Scan(int start, double intersection, double offset, double target, double extent)
         {
