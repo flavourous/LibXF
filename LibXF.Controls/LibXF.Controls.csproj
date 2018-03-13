@@ -8,6 +8,7 @@
     <Product>LibXF.Controls</Product>
     <AssemblyName>LibXF.Controls</AssemblyName>
     <RootNamespace>LibXF.Controls</RootNamespace>
+    <Configurations>Debug;Release;Package</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
