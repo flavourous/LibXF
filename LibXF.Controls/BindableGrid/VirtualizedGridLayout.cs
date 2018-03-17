@@ -4,12 +4,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reactive.Linq;
 using Xamarin.Forms;
 using System.Threading;
-using System.Reactive.Concurrency;
-using System.Reactive.Subjects;
-using System.Reactive;
+using System.Threading.Tasks;
 
 namespace LibXF.Controls.BindableGrid
 {
@@ -20,7 +17,6 @@ namespace LibXF.Controls.BindableGrid
         readonly DataTemplate template;
         readonly VTools rScanner, cScanner;
 
-        event EventHandler<EventArgs> DeferPartialLayout = delegate { };
         readonly MeasureType mt;
         public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template, MeasureType mt)
         {
@@ -31,12 +27,6 @@ namespace LibXF.Controls.BindableGrid
             rScanner = new VTools(x=>info.GetRowHeight(x,mt));
             cScanner = new VTools(x=>info.GetColumnmWidth(x,mt));
             Children.Add(new BoxView { WidthRequest = 0, HeightRequest = 0, BackgroundColor = Color.Transparent }); // forces onlayout to be called
-
-            Observable.FromEventPattern<EventArgs>(h => DeferPartialLayout += h, h => DeferPartialLayout -= h)
-                      .Buffer(TimeSpan.FromMilliseconds(50)) // lets treat it like a delay
-                      .Where(x => x.Count() > 0)
-                      .ObserveOn(SynchronizationContext.Current)
-                      .Subscribe(args => OurLayout());
         }
 
         HashSet<String> ObservedProperties = new HashSet<string>
@@ -46,59 +36,53 @@ namespace LibXF.Controls.BindableGrid
             View.WidthProperty.PropertyName,
             View.HeightProperty.PropertyName
         };
-        IDisposable lastSubscriber;
+        void peh(object sender, PropertyChangedEventArgs args)
+        {
+            if(ObservedProperties.Contains(args.PropertyName))
+            {
+                InvalidateViewportCells();
+            }
+        }
+        INotifyPropertyChanged last;
         protected override void OnParentSet()
         {
-            lock (mtl)
+            base.OnParentSet();
+            if (last != null) last.PropertyChanged -= peh;
+            if (Parent != null)
             {
-                base.OnParentSet();
-                if (lastSubscriber != null)
-                    lastSubscriber.Dispose();
-                if (Parent != null)
-                {
-                    lastSubscriber = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(h => Parent.PropertyChanged += h, h => Parent.PropertyChanged -= h)
-                                               .Buffer(TimeSpan.FromMilliseconds(20))
-                                               .Select(x => x.Select(y => y.EventArgs.PropertyName).Where(ObservedProperties.Contains))
-                                               .Select(x => x.Distinct())
-                                               .Where(x => x.Count() > 0)
-                                               .ObserveOn(SynchronizationContext.Current)
-                                               .Subscribe(x => InvalidateViewportCells());
-                    InvalidateExtent();
-                    InvalidateViewportCells();
-                }
+                last = Parent;
+                last.PropertyChanged += peh;
+                InvalidateExtent();
+                InvalidateViewportCells();
             }
         }
         // recalculate them if required, intent to give LayoutChildren enough information to reogranize and recycle
-        object mtl = new object();
         double lSX, lSY, lW, lH;
         private void InvalidateViewportCells()
         {
-            lock (mtl)
+            double sx = 0.0, sy = 0.0, w = 0.0, h = 0.0;
+            if (Parent is ScrollView lps)
             {
-                double sx = 0.0, sy = 0.0, w = 0.0, h = 0.0;
-                if (Parent is ScrollView lps)
-                {
-                    sx = lps.ScrollX;
-                    sy = lps.ScrollY;
-                    w = lps.Width;
-                    h = lps.Height;
-                }
-                else if (Parent is View v)
-                {
-                    w = Width;
-                    h = Height;
-                }
-                if (lSX != sx || lSY != sy || lW != w || lH != h || runLayout)
-                {
-                    // cache buster
-                    runLayout = true;
-                    runScan = true;
-                    lSX = sx;
-                    lSY = sy;
-                    lW = w;
-                    lH = h;
-                    OurLayout();
-                }
+                sx = lps.ScrollX;
+                sy = lps.ScrollY;
+                w = lps.Width;
+                h = lps.Height;
+            }
+            else if (Parent is View v)
+            {
+                w = Width;
+                h = Height;
+            }
+            if (lSX != sx || lSY != sy || lW != w || lH != h || runLayout)
+            {
+                // cache buster
+                runLayout = true;
+                runScan = true;
+                lSX = sx;
+                lSY = sy;
+                lW = w;
+                lH = h;
+                ProcessChildren();
             }
         }
 
@@ -136,96 +120,100 @@ namespace LibXF.Controls.BindableGrid
             return new DoScanResult { rowRange = rowRange, colRange = colRange, recyclable = recyclable };
         }
 
+
         DoScanResult scan = null;
         bool runScan = false;
         bool runLayout = false;
-        protected override void LayoutChildren(double x, double y, double width, double height)
+        void ProcessChildren()
         {
-            // XF you suck.
-        }
-        void OurLayout()
-        { 
-            lock (mtl)
+            // incremental layout
+            var sw = Stopwatch.StartNew();
+            int maxMS = 125;
+
+            if (runScan || scan == null)
+                scan = DoScan();
+            runScan = false;
+
+            // Update index and layout views
+            double ly = scan.rowRange.placement;
+            for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r, mt))
             {
-                // incremental layout
-                var sw = Stopwatch.StartNew();
-                int maxMS = 50;
-
-                // blocks recursion and layouts we may not need to perform
-                if (!runLayout) return;
-                runLayout = false;
-
-                if (runScan || scan == null)
-                    scan = DoScan();
-                runScan = false;
-
-                // Update index and layout views
-                double ly = scan.rowRange.placement;
-                for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r, mt))
+                double lx = scan.colRange.placement;
+                for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c, mt))
                 {
-                    double lx = scan.colRange.placement;
-                    for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c, mt))
+                    // Interleave progressively
+                    if (sw.ElapsedMilliseconds > maxMS)
                     {
-                        // Interleave progressively
-                        if (sw.ElapsedMilliseconds > maxMS)
+                        var myScan = scan;
+                        Task.Run(async () =>
                         {
-                            runLayout = true;
-                            DeferPartialLayout(this, new EventArgs());
-                            return;
-                        }
+                            await Task.Delay(25);
+                            Device.BeginInvokeOnMainThread(() =>
+                            {
+                                if (scan != myScan) return; // re-scanned! stop!
+                                ProcessChildren(); // context switch splits the stack
+                            });
+                        });
+                        return;
+                    }
 
-                        // Setup and check
-                        var rc = (r, c);
-                        var cc = cells[r][c];
-                        if (cc == null) continue;
+                    // Setup and check
+                    var rc = (r, c);
+                    var cc = cells[r][c];
+                    if (cc == null) continue;
 
-                        // Size should be
-                        double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z, mt));
-                        double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z, mt));
-                        var lrect = new Rectangle(lx, ly, cwidth, cheight);
+                    // Size should be
+                    double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z, mt));
+                    double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z, mt));
+                    var lrect = new Rectangle(lx, ly, cwidth, cheight);
 
-                        // get child to layout
-                        View container = null;
-                        if (CellViewIndex.ContainsKey(rc))
+                    // get child to layout
+                    View container = null;
+                    if (CellViewIndex.ContainsKey(rc))
+                    {
+                        container = CellViewIndex[rc];
+                        if (container.Bounds == lrect) continue;
+                    }
+                    else
+                    {
+                        // Generate container
+                        if (scan.recyclable.Count > 0)
                         {
-                            container = CellViewIndex[rc];
-                            if (container.Bounds == lrect) continue;
+                            var dq = scan.recyclable.Dequeue();
+                            CellViewIndex.Remove(dq.Key);
+                            container = dq.Value;
                         }
                         else
                         {
-                            // Generate container
-                            if (scan.recyclable.Count > 0)
-                            {
-                                var dq = scan.recyclable.Dequeue();
-                                CellViewIndex.Remove(dq.Key);
-                                container = dq.Value;
-                            }
-                            else
-                            {
-                                container = template.CreateContent() as View;
-                                Children.Add(container);
-                            }
-                            container.BindingContext = cc;
-
-                            // Update index
-                            CellViewIndex[rc] = container;
+                            container = template.CreateContent() as View;
+                            Children.Add(container);
                         }
+                        container.BindingContext = cc;
 
-                        // Layout cell - ignore layoutoptions
-                        container.Layout(lrect);
+                        // Update index
+                        CellViewIndex[rc] = container;
                     }
-                }
 
-                // Delete any unrecycled
-                while (scan.recyclable.Count > 0)
-                {
-                    var rcy = scan.recyclable.Dequeue();
-                    Children.Remove(rcy.Value);
-                    CellViewIndex.Remove(rcy.Key);
+                    // Layout cell - ignore layoutoptions
+                    container.Layout(lrect);
                 }
-                scan = null; // Scan is completed
             }
+
+            // Delete any unrecycled
+            while (scan.recyclable.Count > 0)
+            {
+                var rcy = scan.recyclable.Dequeue();
+                Children.Remove(rcy.Value);
+                CellViewIndex.Remove(rcy.Key);
+            }
+            scan = null; // Scan is completed
         }
+
+        protected override void LayoutChildren(double x, double y, double width, double height)
+        {
+            // dont care.
+        }
+
 
         // Extent info
         int nrow, ncol;
