@@ -12,21 +12,81 @@ namespace LibXF.Controls.BindableGrid
 {
     public class VirtualizedGridLayout : Layout<View>
     {
-        readonly ICellInfoManager info;
+        public readonly ICellInfoManager info;
         readonly IList<IList> cells;
         readonly DataTemplate template;
         readonly VTools rScanner, cScanner;
 
-        readonly MeasureType mt;
-        public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template, MeasureType mt)
+        public VirtualizedGridLayout(ICellInfoManager info, IList<IList> cells, DataTemplate template)
         {
-            this.mt = mt;
-            this.info = info;
+            var vv = new InfoMeasurerProxy(MeasureRow, MeasureColumn);
+            vv.SetInfo(info);
+            this.info = vv;
             this.cells = cells;
             this.template = template;
-            rScanner = new VTools(x=>info.GetRowHeight(x,mt));
-            cScanner = new VTools(x=>info.GetColumnmWidth(x,mt));
+            rScanner = new VTools(x=>info.GetRowHeight(x,cells));
+            cScanner = new VTools(x=>info.GetColumnmWidth(x,cells));
             Children.Add(new BoxView { WidthRequest = 0, HeightRequest = 0, BackgroundColor = Color.Transparent }); // forces onlayout to be called
+        }
+
+        class NullCol { }
+        double MeasureColumn(int col)
+        {
+            using (var tm = new TempMeasureHelper(this))
+            {
+                var els = cells.Select(x => col < x.Count ? x[col] : new NullCol());
+                if (els.All(x => x is NullCol)) return 0;
+                var ret = els.Select((x, i) =>
+                {
+                    var ck = (i, col);
+                    if (CellViewIndex.ContainsKey(ck))
+                        return CellViewIndex[ck].Width;
+                    else return tm.Measure(x).Request.Width;
+                }).Max();
+                return ret;
+            }
+        }
+        double MeasureRow(int row)
+        {
+            using (var tm = new TempMeasureHelper(this))
+            {
+                if (row >= cells.Count()) return 0;
+                var ret = cells.ElementAt(row).Cast<Object>().Select((x, i) =>
+                {
+                    var ck = (row, i);
+                    if (CellViewIndex.ContainsKey(ck))
+                        return CellViewIndex[ck].Height;
+                    else return tm.Measure(x).Request.Height;
+                }).Max();
+                return ret;
+            }
+        }
+
+        class TempMeasureHelper :IDisposable
+        {
+            readonly VirtualizedGridLayout vgl;
+            public TempMeasureHelper(VirtualizedGridLayout vgl)
+            {
+                this.vgl = vgl;
+            }
+            View v = null;
+            Object lasto;
+            public SizeRequest Measure(object o)
+            {
+                if(v == null || o?.GetType() != lasto?.GetType())
+                {
+                    lasto = o;
+                    if(v != null) vgl.Children.Remove(v);
+                    v = vgl.CreateFromTemplate(o);
+                    vgl.Children.Add(v);
+                }
+                v.BindingContext = o;
+                return v.Measure(double.PositiveInfinity, double.PositiveInfinity, MeasureFlags.IncludeMargins);
+            }
+            public void Dispose()
+            {
+                if (v != null) vgl.Children.Remove(v);
+            }
         }
 
         HashSet<String> ObservedProperties = new HashSet<string>
@@ -120,7 +180,6 @@ namespace LibXF.Controls.BindableGrid
             return new DoScanResult { rowRange = rowRange, colRange = colRange, recyclable = recyclable };
         }
 
-
         DoScanResult scan = null;
         bool runScan = false;
         bool runLayout = false;
@@ -136,10 +195,10 @@ namespace LibXF.Controls.BindableGrid
 
             // Update index and layout views
             double ly = scan.rowRange.placement;
-            for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r, mt))
+            for (int r = scan.rowRange.first; r <= scan.rowRange.last; r++, ly += info.GetRowHeight(r, cells))
             {
                 double lx = scan.colRange.placement;
-                for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c, mt))
+                for (int c = scan.colRange.first; c <= scan.colRange.last; c++, lx += info.GetColumnmWidth(c, cells))
                 {
                     // Interleave progressively
                     if (sw.ElapsedMilliseconds > maxMS)
@@ -163,8 +222,8 @@ namespace LibXF.Controls.BindableGrid
                     if (cc == null) continue;
 
                     // Size should be
-                    double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z, mt));
-                    double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z, mt));
+                    double cheight = Enumerable.Range(r, info.GetRowSpan(cc)).Sum(z => info.GetRowHeight(z, cells));
+                    double cwidth = Enumerable.Range(c, info.GetColumnSpan(cc)).Sum(z => info.GetColumnmWidth(z, cells));
                     var lrect = new Rectangle(lx, ly, cwidth, cheight);
 
                     // get child to layout
@@ -185,7 +244,7 @@ namespace LibXF.Controls.BindableGrid
                         }
                         else
                         {
-                            container = template.CreateContent() as View;
+                            container = CreateFromTemplate(cc);
                             Children.Add(container);
                         }
                         container.BindingContext = cc;
@@ -207,6 +266,15 @@ namespace LibXF.Controls.BindableGrid
                 CellViewIndex.Remove(rcy.Key);
             }
             scan = null; // Scan is completed
+        }
+
+        View CreateFromTemplate(object context)
+        {
+            var uTemplate = template;
+            if (template is DataTemplateSelector dts)
+                uTemplate = dts.SelectTemplate(context, this);
+
+            return uTemplate.CreateContent() as View;
         }
 
         protected override void LayoutChildren(double x, double y, double width, double height)
@@ -231,8 +299,8 @@ namespace LibXF.Controls.BindableGrid
             {
                 nrow = cells.Count;
                 ncol = cells.Count == 0 ? 0 : cells.Max(x => x.Count);
-                eheight = Enumerable.Range(0, nrow).Sum(x => info.GetRowHeight(x, mt));
-                ewidth = Enumerable.Range(0, ncol).Sum(x => info.GetColumnmWidth(x, mt));
+                eheight = Enumerable.Range(0, nrow).Sum(x => info.GetRowHeight(x, cells));
+                ewidth = Enumerable.Range(0, ncol).Sum(x => info.GetColumnmWidth(x, cells));
                 update = false;
                 InvalidateViewportCells();
             }

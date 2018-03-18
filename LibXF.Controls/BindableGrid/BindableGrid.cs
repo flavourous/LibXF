@@ -8,13 +8,12 @@ using Xamarin.Forms;
 
 namespace LibXF.Controls.BindableGrid
 {
-    public enum MeasureType { Cell, ColumnHeader, RowHeader };
     public interface ICellInfoManager
     {
         int GetRowSpan(Object cellData);
         int GetColumnSpan(Object cellData);
-        double GetColumnmWidth(int col, MeasureType mt);
-        double GetRowHeight(int row, MeasureType mt);
+        double GetColumnmWidth(int col, IList<IList> Source);
+        double GetRowHeight(int row, IList<IList> Source);
     }
     public class BindableGrid : ContentView //  ItemsView<>?
     {
@@ -57,15 +56,24 @@ namespace LibXF.Controls.BindableGrid
         {
             if (new object[] { CellInfo, CellsSource, CellTemplate }.All(x => x != null))
             {
-                // Generate and place vgl components
-                var mainCells = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, CellsSource, CellTemplate, MeasureType.Cell), Orientation = ScrollOrientation.Both };
+                // header source defense
                 var urh = RowHeadersSource ?? Enumerable.Empty<object>().Select(x => Enumerable.Empty<object>().ToList() as IList).ToList();
                 var uch = ColumnHeadersSource ?? Enumerable.Empty<object>().Select(x => Enumerable.Empty<object>().ToList() as IList).ToList();
-                var rHead = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, urh, CellTemplate, MeasureType.RowHeader), Orientation= ScrollOrientation.Vertical };
-                var cHead = new ScrollView { Content = new VirtualizedGridLayout(CellInfo, uch, CellTemplate, MeasureType.ColumnHeader), Orientation = ScrollOrientation.Horizontal };
-                var cHeadHeight = uch.Count == 0 ? 0.0 : Enumerable.Range(0, uch.Count).Sum(x => CellInfo.GetRowHeight(x, MeasureType.ColumnHeader));
+
+                // virtualizing grids
+                var mainvg = new VirtualizedGridLayout(CellInfo, CellsSource, CellTemplate);
+                var cheadvg = new VirtualizedGridLayout(CellInfo, uch, CellTemplate);
+                var rheadvg = new VirtualizedGridLayout(CellInfo, urh, CellTemplate);
+
+                // Generate and place vgl components
+                var mainCells = new ScrollView { Content = mainvg, Orientation = ScrollOrientation.Both };
+                var rHead = new ScrollView { Content = rheadvg, Orientation= ScrollOrientation.Vertical };
+                var cHead = new ScrollView { Content = cheadvg, Orientation = ScrollOrientation.Horizontal };
+
+                // figuring out heights - use the virtualized grid's info because it does proxies
+                var cHeadHeight = uch.Count == 0 ? 0.0 : Enumerable.Range(0, uch.Count).Sum(x => cheadvg.info.GetRowHeight(x, uch));
                 var maxcols = urh.Count == 0 ? 0 : urh.Max(x => x.Count);
-                var rHeadWidth = maxcols == 0 ? 0.0 : Enumerable.Range(0, maxcols).Sum(x => CellInfo.GetColumnmWidth(x, MeasureType.RowHeader));
+                var rHeadWidth = maxcols == 0 ? 0.0 : Enumerable.Range(0, maxcols).Sum(x => rheadvg.info.GetColumnmWidth(x, urh));
                 Grid.SetRow(rHead, 1);
                 Grid.SetColumn(cHead, 1);
                 Grid.SetRow(mainCells, 1);
